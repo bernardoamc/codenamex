@@ -37,10 +37,10 @@ defmodule Codenamex.Game.Board do
     cards = Map.replace!(board.cards, word, updated_card)
 
     updated_board = case updated_card.color do
-      "red" -> %__MODULE__{board | cards: cards, red_cards: board.red_cards - 1}
-      "blue" -> %__MODULE__{board | cards: cards, blue_cards: board.blue_cards - 1}
-      "yellow" -> %__MODULE__{board | cards: cards, yellow_cards: board.yellow_cards - 1}
-      "black" -> %__MODULE__{board | cards: cards, black_cards: 0}
+      "red" -> %{board | cards: cards, red_cards: board.red_cards - 1}
+      "blue" -> %{board | cards: cards, blue_cards: board.blue_cards - 1}
+      "yellow" -> %{board | cards: cards, yellow_cards: board.yellow_cards - 1}
+      "black" -> %{board | cards: cards, black_cards: 0}
     end
 
     {updated_card.color, updated_board}
