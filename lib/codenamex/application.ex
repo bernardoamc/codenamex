@@ -4,14 +4,15 @@ defmodule Codenamex.Application do
   @moduledoc false
 
   use Application
+  import Supervisor.Spec
 
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
       # Start the endpoint when the application starts
-      CodenamexWeb.Endpoint
-      # Starts a worker by calling: Codenamex.Worker.start_link(arg)
-      # {Codenamex.Worker, arg},
+      CodenamexWeb.Endpoint,
+      supervisor(Codenamex.GameSupervisor, []),
+      worker(Codenamex.GameRegistry, [])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
