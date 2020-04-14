@@ -16,7 +16,8 @@ defmodule CodenamexWeb.Router do
   scope "/", CodenamexWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    get "/", RoomController, :index
+    resources "/rooms", RoomController, only: [:create, :show]
   end
 
   # Other scopes may use custom stacks.

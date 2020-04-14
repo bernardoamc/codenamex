@@ -1,0 +1,13 @@
+<script>
+  window.codenamex = {};
+  window.codenamex.roomName = "<%= assigns[:room_name] %>";
+  window.codenamex.playerName = "<%= assigns[:player_name] %>";
+</script>
+
+<div class="players">
+</div>
+
+<div class="game" id="game">
+</div>
+
+<div id="result" class="info"></div>
