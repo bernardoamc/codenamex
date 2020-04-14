@@ -1,4 +1,9 @@
 defmodule Codenamex.Game.Dictionary do
+  @moduledoc """
+  This module manages the game dictionary.
+  We can fetch words from this module with a call to fetch/1.
+  """
+
   @words [
     "Acne",
     "Acre",

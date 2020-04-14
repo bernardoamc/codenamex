@@ -1,4 +1,9 @@
 defmodule Codenamex.Game.Card do
+  @moduledoc """
+  This module manages the card logic.
+  A card represents a word from the game, which has a color and can be touched.
+  """
+
   defstruct [
     color: nil,
     touched: false

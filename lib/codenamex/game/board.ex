@@ -1,4 +1,10 @@
 defmodule Codenamex.Game.Board do
+  @moduledoc """
+  This module manages the board logic.
+  All the functions besides setup/0 expect a board state.
+  A state is a variation of what was created by the setup/0 function.
+  """
+
   alias Codenamex.Game.Card
   alias Codenamex.Game.Dictionary
   alias Codenamex.Game.Team
