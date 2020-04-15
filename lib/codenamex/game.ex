@@ -13,6 +13,8 @@ defmodule Codenamex.Game do
    turn: nil,
    touched_color: nil,
    over: false,
+   status: :pending,
+   guests: [],
    blue_team: [],
    red_team: []
  ]
@@ -26,6 +28,14 @@ defmodule Codenamex.Game do
     }
   end
 
+  def start(game) do
+    %{game | status: :started}
+  end
+
+  def fetch_cards(game) do
+    Board.cards(game.board)
+  end
+
   def touch_card(game, word) do
     {touched_color, updated_board} = Board.touch_card(game.board, word)
     update_state(game, updated_board, touched_color)
@@ -33,6 +43,14 @@ defmodule Codenamex.Game do
 
   defp next_team("red"), do: "blue"
   defp next_team("blue"), do: "red"
+
+  def fetch_players(game) do
+    %{guests: game.guests, red_team: game.red_team, blue_team: game.blue_team}
+  end
+
+  def add_player(game, player, "guest")  do
+    %{game | guests: [player | game.guests]}
+  end
 
   def add_player(game, player, "red") do
     %{game | red_team: [player | game.red_team]}
@@ -42,12 +60,9 @@ defmodule Codenamex.Game do
     %{game | blue_team: [player | game.blue_team]}
   end
 
-  def remove_player(game, player, "red") do
-    %{game | red_team: List.delete(game.red_team, player)}
-  end
-
-  def remove_player(game, player, "blue") do
-    %{game | blue_team: List.delete(game.blue_team, player)}
+  def remove_player(game, player) do
+    team = find_team(game, player)
+    remove_player(game, player, team)
   end
 
   def restart(game) do
@@ -103,5 +118,25 @@ defmodule Codenamex.Game do
       _ ->
         %{game | board: updated_board, touched_color: "red", turn: "red"}
     end
+  end
+
+  defp find_team(game, player) do
+    cond do
+      Enum.member?(game.guests, player) -> "guest"
+      Enum.member?(game.red_team, player) -> "red"
+      Enum.member?(game.blue_team, player) -> "blue"
+    end
+  end
+
+  defp remove_player(game, player, "guest") do
+    %{game | guests: List.delete(game.guests, player)}
+  end
+
+  defp remove_player(game, player, "red") do
+    %{game | red_team: List.delete(game.red_team, player)}
+  end
+
+  defp remove_player(game, player, "blue") do
+    %{game | blue_team: List.delete(game.blue_team, player)}
   end
 end

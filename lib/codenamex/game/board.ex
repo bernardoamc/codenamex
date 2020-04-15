@@ -38,6 +38,10 @@ defmodule Codenamex.Game.Board do
     }
   end
 
+  def cards(board) do
+    board.cards
+  end
+
   def touch_card(board, word) do
     updated_card = Map.fetch!(board.cards, word) |> Card.touch
     cards = Map.replace!(board.cards, word, updated_card)
