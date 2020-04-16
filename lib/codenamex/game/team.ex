@@ -28,7 +28,8 @@ defmodule Codenamex.Game.Team do
   end
 
   def remove_player(team, player_name) do
-    Map.delete(team.players, player_name)
+    updated_players = Map.delete(team.players, player_name)
+    %{team | players: updated_players}
   end
 
   def fetch_players(team) do

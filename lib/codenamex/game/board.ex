@@ -17,7 +17,8 @@ defmodule Codenamex.Game.Board do
 
   defstruct [
     words: nil,
-    cards: nil,
+    regular_cards: nil,
+    spymaster_cards: nil,
     first_team: nil,
     red_cards: nil,
     blue_cards: nil,
@@ -28,82 +29,123 @@ defmodule Codenamex.Game.Board do
   def setup() do
     [first_team, second_team] = Team.pick_order()
     words = Dictionary.fetch(@cards_count)
+    {regular_cards, spymaster_cards} = setup_board(words, first_team, second_team)
 
     %__MODULE__{
       words: words |> Enum.shuffle,
-      cards: setup_board(words, first_team, second_team),
+      regular_cards: regular_cards,
+      spymaster_cards: spymaster_cards,
       first_team: first_team,
       red_cards: red_cards_start(:first_team, first_team),
       blue_cards: blue_cards_start(:first_team, first_team)
     }
   end
 
-  def cards(board) do
-    board.cards
+  def regular_cards(board) do
+    board.regular_cards
+  end
+
+  def spymaster_cards(board) do
+    board.spymaster_cards
   end
 
   def touch_card(board, word) do
-    selected_card = Map.fetch!(board.cards, word)
+    selected_regular_card = Map.fetch!(board.regular_cards, word)
 
-    case Card.touchable?(selected_card) do
+    case Card.touchable?(selected_regular_card) do
       true ->
-        updated_board = update_state(board, word, selected_card)
-        {:ok, {selected_card.color, updated_board}}
+        selected_spymaster_card = Map.fetch!(board.spymaster_cards, word)
+        updated_board = update_state(board, word, selected_spymaster_card)
+        {:ok, {selected_spymaster_card.color, updated_board}}
       false ->
         {:error, board}
     end
   end
 
-  defp update_state(board, word, selected_card) do
-    updated_card = Card.touch(selected_card)
-    cards = Map.replace!(board.cards, word, updated_card)
+  defp update_state(board, word, selected_spymaster_card) do
+    updated_spymaster_card = Card.touch(selected_spymaster_card)
+    spymaster_cards = Map.replace!(board.spymaster_cards, word, updated_spymaster_card)
+    regular_cards = Map.replace!(board.regular_cards, word, updated_spymaster_card)
 
-    case updated_card.color do
-      "red" -> %{board | cards: cards, red_cards: board.red_cards - 1}
-      "blue" -> %{board | cards: cards, blue_cards: board.blue_cards - 1}
-      "yellow" -> %{board | cards: cards, yellow_cards: board.yellow_cards - 1}
-      "black" -> %{board | cards: cards, black_cards: 0}
+
+    case updated_spymaster_card.color do
+      "red" ->
+        red_cards = board.red_cards - 1
+        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, red_cards: red_cards}
+      "blue" ->
+        blue_cards = board.blue_cards - 1
+        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, blue_cards: blue_cards}
+      "yellow" ->
+        yellow_cards = board.yellow_cards - 1
+        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, yellow_cards: yellow_cards}
+      "black" ->
+        black_cards = board.black_cards - 1
+        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, black_cards: black_cards}
     end
   end
 
   defp setup_board(words, first_team, second_team) do
-    first_team_cards = setup_cards(
+    {first_regular_cards, first_sypermaster_cards} = setup_cards(
       words,
       first_team,
       @first_team_cards_count,
       0
     )
 
-    second_team_cards = setup_cards(
+    {second_regular_cards, second_sypermaster_cards} = setup_cards(
       words,
       second_team,
       @second_team_cards_count,
       @first_team_cards_count
     )
 
-    black_cards = setup_cards(
+    {black_regular_cards, black_spymaster_cards} = setup_cards(
       words,
       "black",
       @black_cards_count,
       @first_team_cards_count + @second_team_cards_count
     )
 
-    neutral_cards = setup_cards(
+    {neutral_regular_cards, neutral_spymaster_cards} = setup_cards(
       words,
       "yellow",
       @yellow_cards_count,
       @first_team_cards_count + @second_team_cards_count + @black_cards_count
     )
 
-    first_team_cards ++ second_team_cards ++ black_cards ++ neutral_cards
-    |> Enum.into(%{})
+    regular_cards = first_regular_cards
+                    ++ second_regular_cards
+                    ++ black_regular_cards
+                    ++ neutral_regular_cards
+
+
+    spymaster_cards = first_sypermaster_cards
+                      ++ second_sypermaster_cards
+                      ++ black_spymaster_cards
+                      ++ neutral_spymaster_cards
+
+    {Enum.into(regular_cards, %{}), Enum.into(spymaster_cards, %{})}
   end
 
   defp setup_cards(words, color, amount_of_cards, skip_cards) do
-    words
-    |> Enum.slice(skip_cards, amount_of_cards)
-    |> Enum.map(fn word ->
-      {word, %Card{color: color}}
+    selected_words = select_words(words, amount_of_cards, skip_cards)
+
+    {setup_regular_cards(selected_words), setup_spymaster_cards(selected_words, color)}
+  end
+
+  defp select_words(words, skip_cards, amount_of_cards) do
+    Enum.slice(words, skip_cards, amount_of_cards)
+  end
+
+  defp setup_regular_cards(words) do
+    Enum.map(words, fn word ->
+      {word, Card.setup(word)}
+    end)
+  end
+
+  defp setup_spymaster_cards(words, color) do
+    Enum.map(words, fn word ->
+      {word, Card.setup(word, color)}
     end)
   end
 

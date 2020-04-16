@@ -10,15 +10,15 @@ defmodule Codenamex.Game do
   alias Codenamex.Game.Team
 
  defstruct [
+   guests: nil,
+   blue_team: nil,
+   red_team: nil,
    board: nil,
    winner: nil,
    turn: nil,
    touched_color: nil,
    over: false,
-   status: :pending,
-   guests: %Team{},
-   blue_team: %Team{},
-   red_team: %Team{}
+   status: :pending
  ]
 
   def setup do
@@ -26,7 +26,10 @@ defmodule Codenamex.Game do
 
     %__MODULE__{
       board: board,
-      turn: board.first_team
+      turn: board.first_team,
+      guests: Team.setup(),
+      blue_team: Team.setup(),
+      red_team: Team.setup()
     }
   end
 
@@ -34,8 +37,22 @@ defmodule Codenamex.Game do
     %{game | status: :started}
   end
 
-  def fetch_cards(game) do
-    Board.cards(game.board)
+  def fetch_state(game, "regular") do
+    regular_state = Map.take(game, [:red_cards, :blue_cards])
+    {:ok, %{regular_state | cards: fetch_cards(game, "regular")}}
+  end
+
+  def fetch_state(game, "spymaster") do
+    regular_state = Map.take(game, [:red_cards, :blue_cards])
+    {:ok, %{regular_state | cards: fetch_cards(game, "spymaster")}}
+  end
+
+  def fetch_cards(game, "regular") do
+    {:ok, Board.regular_cards(game.board)}
+  end
+
+  def fetch_cards(game, "spymaster") do
+    {:ok, Board.spymaster_cards(game.board)}
   end
 
   def touch_card(game, word) do
@@ -58,7 +75,7 @@ defmodule Codenamex.Game do
     %{guests: guests, red_team: red, blue_team: blue}
   end
 
-  def add_player(game, player_name, "guest")  do
+  def add_player(game, player_name)  do
     player = Player.setup(player_name, "regular")
 
     {:ok, team} = Team.add_player(game.guests, player, "regular")
@@ -67,18 +84,20 @@ defmodule Codenamex.Game do
 
   def pick_team(game, player_name, "red", type) do
     player = Player.setup(player_name, type)
+    updated_guests = Team.remove_player(game.guests, player_name)
 
     case Team.add_player(game.red_team, player, type) do
-      {:ok, team} -> {:ok, %{game | red_team: team}}
+      {:ok, team} -> {:ok, %{game | red_team: team, guests: updated_guests}}
       {:error, reason} -> {:error, reason}
     end
   end
 
   def pick_team(game, player_name, "blue", type) do
     player = Player.setup(player_name, type)
+    updated_guests = Team.remove_player(game.guests, player_name)
 
     case Team.add_player(game.blue_team, player, type) do
-      {:ok, team} -> {:ok, %{game | blue_team: team}}
+      {:ok, team} -> {:ok, %{game | blue_team: team, guests: updated_guests}}
       {:error, reason} -> {:error, reason}
     end
   end
