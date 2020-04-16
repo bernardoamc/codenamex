@@ -15,14 +15,34 @@ defmodule CodenamexWeb.RoomChannel do
 
     case GameServer.add_player(game_pid, player_name, "guest") do
       {:ok, _state} ->
-        send(self(), :player_joined)
+        send(self(), :joined_room)
+        # TODO: Answer those two scenarios
+        # If a player joins once the game has started we need to show the state of the game
+        # If a player joins before the game has started we need to show the players states
         {:ok, socket}
-      {:error, reason} ->
-        {:error, %{reason: reason}}
+      :error ->
+        {:error, %{reason: :no_idea}}
     end
   end
 
-  def handle_info(:player_joined, socket) do
+  # TODO: When picking a team remove the player from game.guests and add to a team
+  def handle_in("pick_team", %{"type" => "spymaster", "team" => "red"} = choice, socket) do
+    pick_team(socket, choice)
+  end
+
+  def handle_in("pick_team", %{"type" => "regular", "team" => "red"} = choice, socket) do
+    pick_team(socket, choice)
+  end
+
+  def handle_in("pick_team", %{"type" => "spymaster", "team" => "blue"} = choice, socket) do
+    pick_team(socket, choice)
+  end
+
+  def handle_in("pick_team", %{"type" => "regular", "team" => "blue"} = choice, socket) do
+    pick_team(socket, choice)
+  end
+
+  def handle_info(:joined_room, socket) do
     game_pid = socket.assigns.game_pid
     room_name = socket.assigns.room_name
 
@@ -32,25 +52,62 @@ defmodule CodenamexWeb.RoomChannel do
     {:noreply, socket}
   end
 
+  def handle_info(:picked_team, socket) do
+    game_pid = socket.assigns.game_pid
+    room_name = socket.assigns.room_name
+
+    {:ok, players} = GameServer.fetch_players(game_pid)
+    broadcast! socket, room_name <> ":team_change", %{players: players}
+
+    {:noreply, socket}
+  end
+
   def handle_in("remove_player", socket) do
-    remove_player(socket)
+    case remove_player(socket) do
+      {:ok, :player_removed} -> broadcast_players(socket)
+      _ -> nil
+    end
+
     {:noreply, socket}
   end
 
   def terminate(_reason, socket) do
-    remove_player(socket)
+    case remove_player(socket) do
+      {:ok, :player_removed} -> broadcast_players(socket)
+      _ -> nil
+    end
+
     :ok
+  end
+
+  defp pick_team(socket, %{"type" => type, "team" => team}) do
+    game_pid = socket.assigns.game_pid
+    player_name = socket.assigns.player_name
+
+    case GameServer.pick_team(game_pid, player_name, team, type) do
+      {:ok, _state} ->
+        send(self(), :picked_team)
+        {:reply, {:ok, %{message: "joined"}}, socket}
+      {:error, reason} ->
+        {:reply, {:error, %{message: reason}}, socket}
+    end
   end
 
   defp remove_player(socket) do
     game_pid = socket.assigns.game_pid
     player_name = socket.assigns.player_name
 
-    {:ok, _state} = GameServer.remove_player(game_pid, player_name)
+    case GameServer.remove_player(game_pid, player_name) do
+      {:ok, _state} -> {:ok, :player_removed}
+      {:error, reason} -> {:error, %{reason: reason}}
+    end
+  end
+
+  defp broadcast_players(socket) do
+    game_pid = socket.assigns.game_pid
 
     case GameServer.fetch_players(game_pid) do
       {:ok, players} ->
-        IO.inspect(players)
         broadcast! socket, "player_left", %{players: players}
       {:empty, _} ->
         GameRegistry.unregister(socket.assigns.room_name)

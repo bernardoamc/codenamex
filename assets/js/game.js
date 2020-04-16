@@ -18,6 +18,13 @@ let Game = {
     roomChannel.on(`${codenamex.roomName}:joined`, (resp) => {
       console.log(resp);
     })
+
+    roomChannel.on(`${codenamex.roomName}:team_change`, (resp) => {
+      console.log(resp);
+    })
+
+    roomChannel.push("pick_team", {type: "regular", team: "red"})
+      .receive("ok", (resp) => console.log("pick_team:", resp))
   }
 };
 
