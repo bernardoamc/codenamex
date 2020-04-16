@@ -23,12 +23,8 @@ defmodule Codenamex.GameServer do
     GenServer.call(pid, :restart_game)
   end
 
-  def fetch_cards(pid) do
-    GenServer.call(pid, :fetch_cards)
-  end
-
-  def add_player(pid, player, team) do
-    GenServer.call(pid, {:add_player, player, team})
+  def add_player(pid, player) do
+    GenServer.call(pid, {:add_player, player})
   end
 
   def pick_team(pid, player, team, type) do
@@ -57,11 +53,6 @@ defmodule Codenamex.GameServer do
     {:reply, {:ok, new_state}, new_state}
   end
 
-  def handle_call(:fetch_cards, _from, state) do
-    cards = Game.fetch_cards(state)
-    {:reply, {:ok, cards}, state}
-  end
-
   def handle_call({:touch_card, word}, _from, state) do
     case Game.touch_card(state, word) do
       {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
@@ -69,9 +60,17 @@ defmodule Codenamex.GameServer do
     end
   end
 
-  def handle_call({:add_player, player_name, team}, _from, state) do
-    {:ok, new_state} = Game.add_player(state, player_name, team)
-    {:reply, {:ok, new_state}, new_state}
+  def handle_call({:add_player, player_name}, _from, state) do
+    {:ok, new_state} = Game.add_player(state, player_name)
+    players = Game.fetch_players(new_state)
+
+    case new_state do
+      %{status: :pending} ->
+        {:reply, {:ok, players}, new_state}
+      %{status: :started} ->
+        {:ok, regular_state} = Game.fetch_state(new_state, "regular")
+        {:reply, {:ok, {players, regular_state}}, new_state}
+    end
   end
 
   def handle_call({:pick_team, player_name, team, type}, _from, state) do

@@ -13,19 +13,16 @@ defmodule CodenamexWeb.RoomChannel do
       |> assign(:room_name, room_name)
       |> assign(:player_name, player_name)
 
-    case GameServer.add_player(game_pid, player_name, "guest") do
-      {:ok, _state} ->
+    case GameServer.add_player(game_pid, player_name) do
+      {:ok, {players, cards}} ->
         send(self(), :joined_room)
-        # TODO: Answer those two scenarios
-        # If a player joins once the game has started we need to show the state of the game
-        # If a player joins before the game has started we need to show the players states
-        {:ok, socket}
-      :error ->
-        {:error, %{reason: :no_idea}}
+        {:ok, %{message: "welcome", players: players, cards: cards}, socket}
+      {:ok, players} ->
+        send(self(), :joined_room)
+        {:ok, %{message: "welcome", players: players}, socket}
     end
   end
 
-  # TODO: When picking a team remove the player from game.guests and add to a team
   def handle_in("pick_team", %{"type" => "spymaster", "team" => "red"} = choice, socket) do
     pick_team(socket, choice)
   end
@@ -86,6 +83,7 @@ defmodule CodenamexWeb.RoomChannel do
 
     case GameServer.pick_team(game_pid, player_name, team, type) do
       {:ok, _state} ->
+        assign(socket, :team, team)
         send(self(), :picked_team)
         {:reply, {:ok, %{message: "joined"}}, socket}
       {:error, reason} ->
