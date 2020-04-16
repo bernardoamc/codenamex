@@ -26,6 +26,11 @@ defmodule Codenamex.Game.Board do
     yellow_cards: @yellow_cards_count
   ]
 
+  @serialization_keys [
+    :red_cards,
+    :blue_cards
+  ]
+
   def setup() do
     [first_team, second_team] = Team.pick_order()
     words = Dictionary.fetch(@cards_count)
@@ -41,12 +46,14 @@ defmodule Codenamex.Game.Board do
     }
   end
 
-  def regular_cards(board) do
-    board.regular_cards
+  def fetch_state(board, "regular") do
+    regular_state = Map.take(board, @serialization_keys)
+    %{regular_state | cards: board.regular_cards}
   end
 
-  def spymaster_cards(board) do
-    board.spymaster_cards
+  def fetch_state(board, "spymaster") do
+    spymaster_state = Map.take(board, @serialization_keys)
+    %{spymaster_state | cards: board.spymaster_cards}
   end
 
   def touch_card(board, word) do

@@ -9,17 +9,23 @@ defmodule Codenamex.Game do
   alias Codenamex.Game.Player
   alias Codenamex.Game.Team
 
- defstruct [
-   guests: nil,
-   blue_team: nil,
-   red_team: nil,
-   board: nil,
-   winner: nil,
-   turn: nil,
-   touched_color: nil,
-   over: false,
-   status: :pending
- ]
+  defstruct [
+    guests: nil,
+    blue_team: nil,
+    red_team: nil,
+    board: nil,
+    winner: nil,
+    turn: nil,
+    touched_color: nil,
+    over: false,
+    status: :pending
+  ]
+
+  @serialization_keys [
+    :winner,
+    :turn,
+    :over
+  ]
 
   def setup do
     board = Board.setup()
@@ -38,24 +44,18 @@ defmodule Codenamex.Game do
   end
 
   def fetch_state(game, "regular") do
-    regular_state = Map.take(game, [:red_cards, :blue_cards])
-    {:ok, %{regular_state | cards: fetch_cards(game, "regular")}}
+    board_state = Board.fetch_state(game.board, "regular")
+    regular_state = Map.take(game, @serialization_keys)
+    {:ok, %{regular_state | board: board_state}}
   end
 
   def fetch_state(game, "spymaster") do
-    regular_state = Map.take(game, [:red_cards, :blue_cards])
-    {:ok, %{regular_state | cards: fetch_cards(game, "spymaster")}}
+    board_state = Board.fetch_state(game.board, "spymaster")
+    spymaster_state = Map.take(game, @serialization_keys)
+    {:ok, %{spymaster_state | board: board_state}}
   end
 
-  def fetch_cards(game, "regular") do
-    {:ok, Board.regular_cards(game.board)}
-  end
-
-  def fetch_cards(game, "spymaster") do
-    {:ok, Board.spymaster_cards(game.board)}
-  end
-
-  def touch_card(game, word) do
+  def touch_card(game, word, _player_name) do
     case Board.touch_card(game.board, word) do
       {:ok, {touched_color, updated_board}} ->
         {:ok, update_state(game, updated_board, touched_color)}
