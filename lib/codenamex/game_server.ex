@@ -31,6 +31,10 @@ defmodule Codenamex.GameServer do
     GenServer.call(pid, {:add_player, player, team})
   end
 
+  def pick_team(pid, player, team, type) do
+    GenServer.call(pid, {:pick_team, player, team, type})
+  end
+
   def remove_player(pid, player) do
     GenServer.call(pid, {:remove_player, player})
   end
@@ -45,12 +49,12 @@ defmodule Codenamex.GameServer do
 
   def handle_call(:start_game, _from, state) do
     new_state = Game.start(state)
-    {:reply, :ok, new_state}
+    {:reply, {:ok, new_state}, new_state}
   end
 
   def handle_call(:restart_game, _from, state) do
     new_state = Game.restart(state)
-    {:reply, :ok, new_state}
+    {:reply, {:ok, new_state}, new_state}
   end
 
   def handle_call(:fetch_cards, _from, state) do
@@ -59,18 +63,29 @@ defmodule Codenamex.GameServer do
   end
 
   def handle_call({:touch_card, word}, _from, state) do
-    new_state = Game.touch_card(state, word)
+    case Game.touch_card(state, word) do
+      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
+      {:error, _} -> {:reply, :error, state}
+    end
+  end
+
+  def handle_call({:add_player, player_name, team}, _from, state) do
+    {:ok, new_state} = Game.add_player(state, player_name, team)
     {:reply, {:ok, new_state}, new_state}
   end
 
-  def handle_call({:add_player, player, team}, _from, state) do
-    new_state = Game.add_player(state, player, team)
-    {:reply, {:ok, new_state}, new_state}
+  def handle_call({:pick_team, player_name, team, type}, _from, state) do
+    case Game.pick_team(state, player_name, team, type) do
+      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
   end
 
-  def handle_call({:remove_player, player}, _from, state) do
-    new_state = Game.remove_player(state, player)
-    {:reply, {:ok, new_state}, new_state}
+  def handle_call({:remove_player, player_name}, _from, state) do
+    case Game.remove_player(state, player_name) do
+      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
   end
 
   def handle_call(:fetch_players, _from, state) do

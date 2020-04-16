@@ -6,6 +6,8 @@ defmodule Codenamex.Game do
   """
 
   alias Codenamex.Game.Board
+  alias Codenamex.Game.Player
+  alias Codenamex.Game.Team
 
  defstruct [
    board: nil,
@@ -14,9 +16,9 @@ defmodule Codenamex.Game do
    touched_color: nil,
    over: false,
    status: :pending,
-   guests: [],
-   blue_team: [],
-   red_team: []
+   guests: %Team{},
+   blue_team: %Team{},
+   red_team: %Team{}
  ]
 
   def setup do
@@ -37,32 +39,55 @@ defmodule Codenamex.Game do
   end
 
   def touch_card(game, word) do
-    {touched_color, updated_board} = Board.touch_card(game.board, word)
-    update_state(game, updated_board, touched_color)
+    case Board.touch_card(game.board, word) do
+      {:ok, {touched_color, updated_board}} ->
+        {:ok, update_state(game, updated_board, touched_color)}
+      {:error, _} ->
+        {:error, game}
+    end
   end
 
   defp next_team("red"), do: "blue"
   defp next_team("blue"), do: "red"
 
   def fetch_players(game) do
-    %{guests: game.guests, red_team: game.red_team, blue_team: game.blue_team}
+    guests = Team.fetch_players(game.guests)
+    red = Team.fetch_players(game.red_team)
+    blue = Team.fetch_players(game.blue_team)
+
+    %{guests: guests, red_team: red, blue_team: blue}
   end
 
-  def add_player(game, player, "guest")  do
-    %{game | guests: [player | game.guests]}
+  def add_player(game, player_name, "guest")  do
+    player = Player.setup(player_name, "regular")
+
+    {:ok, team} = Team.add_player(game.guests, player, "regular")
+    {:ok, %{game | guests: team}}
   end
 
-  def add_player(game, player, "red") do
-    %{game | red_team: [player | game.red_team]}
+  def pick_team(game, player_name, "red", type) do
+    player = Player.setup(player_name, type)
+
+    case Team.add_player(game.red_team, player, type) do
+      {:ok, team} -> {:ok, %{game | red_team: team}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  def add_player(game, player, "blue") do
-    %{game | blue_team: [player | game.blue_team]}
+  def pick_team(game, player_name, "blue", type) do
+    player = Player.setup(player_name, type)
+
+    case Team.add_player(game.blue_team, player, type) do
+      {:ok, team} -> {:ok, %{game | blue_team: team}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  def remove_player(game, player) do
-    team = find_team(game, player)
-    remove_player(game, player, team)
+  def remove_player(game, player_name) do
+    case find_team(game, player_name) do
+      nil -> {:error, :player_not_found}
+      team -> {:ok, remove_from_team(game, player_name, team)}
+    end
   end
 
   def restart(game) do
@@ -120,23 +145,24 @@ defmodule Codenamex.Game do
     end
   end
 
-  defp find_team(game, player) do
+  defp find_team(game, player_name) do
     cond do
-      Enum.member?(game.guests, player) -> "guest"
-      Enum.member?(game.red_team, player) -> "red"
-      Enum.member?(game.blue_team, player) -> "blue"
+      Map.has_key?(game.guests, player_name) -> "guest"
+      Map.has_key?(game.red_team, player_name) -> "red"
+      Map.has_key?(game.blue_team, player_name) -> "blue"
+      true -> nil
     end
   end
 
-  defp remove_player(game, player, "guest") do
-    %{game | guests: List.delete(game.guests, player)}
+  defp remove_from_team(game, player_name, "guest") do
+    %{game | guests: Team.remove_player(game.guests, player_name)}
   end
 
-  defp remove_player(game, player, "red") do
-    %{game | red_team: List.delete(game.red_team, player)}
+  defp remove_from_team(game, player_name, "red") do
+    %{game | red_team: Team.remove_player(game.red_team, player_name)}
   end
 
-  defp remove_player(game, player, "blue") do
-    %{game | blue_team: List.delete(game.blue_team, player)}
+  defp remove_from_team(game, player_name, "blue") do
+    %{game | blue_team: Team.remove_player(game.blue_team, player_name)}
   end
 end

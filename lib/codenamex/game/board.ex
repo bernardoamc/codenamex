@@ -43,17 +43,27 @@ defmodule Codenamex.Game.Board do
   end
 
   def touch_card(board, word) do
-    updated_card = Map.fetch!(board.cards, word) |> Card.touch
+    selected_card = Map.fetch!(board.cards, word)
+
+    case Card.touchable?(selected_card) do
+      true ->
+        updated_board = update_state(board, word, selected_card)
+        {:ok, {selected_card.color, updated_board}}
+      false ->
+        {:error, board}
+    end
+  end
+
+  defp update_state(board, word, selected_card) do
+    updated_card = Card.touch(selected_card)
     cards = Map.replace!(board.cards, word, updated_card)
 
-    updated_board = case updated_card.color do
+    case updated_card.color do
       "red" -> %{board | cards: cards, red_cards: board.red_cards - 1}
       "blue" -> %{board | cards: cards, blue_cards: board.blue_cards - 1}
       "yellow" -> %{board | cards: cards, yellow_cards: board.yellow_cards - 1}
       "black" -> %{board | cards: cards, black_cards: 0}
     end
-
-    {updated_card.color, updated_board}
   end
 
   defp setup_board(words, first_team, second_team) do
