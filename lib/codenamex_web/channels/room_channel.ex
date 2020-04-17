@@ -4,6 +4,8 @@ defmodule CodenamexWeb.RoomChannel do
   alias Codenamex.GameRegistry
   alias Codenamex.GameServer
 
+  intercept ["game_started"]
+
   def join("room:" <> room_name, %{"player_name" => player_name}, socket) do
     game_pid = GameRegistry.fetch(room_name)
 
@@ -12,14 +14,19 @@ defmodule CodenamexWeb.RoomChannel do
       |> assign(:game_pid, game_pid)
       |> assign(:room_name, room_name)
       |> assign(:player_name, player_name)
+      |> assign(:team, "guest")
 
     case GameServer.add_player(game_pid, player_name) do
-      {:ok, {players, cards}} ->
+      {:ok, {players, serialized_state}} ->
         send(self(), :joined_room)
-        {:ok, %{message: "welcome", players: players, cards: cards}, socket}
+        {
+          :ok,
+          %{message: "room joined", players: players, serialized_state: serialized_state},
+          socket
+        }
       {:ok, players} ->
         send(self(), :joined_room)
-        {:ok, %{message: "welcome", players: players}, socket}
+        {:ok, %{message: "room joined", players: players}, socket}
     end
   end
 
@@ -39,23 +46,51 @@ defmodule CodenamexWeb.RoomChannel do
     pick_team(socket, choice)
   end
 
+  def handle_in("start_game", _opts, socket) do
+    game_pid = socket.assigns.game_pid
+
+    case GameServer.start_game(game_pid) do
+      {:ok, _} -> send(self(), :game_started)
+      _ -> nil
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_in("touch_card", %{"word" => _word}, _socket) do
+    # TODO: IMPLEMENT, check if player can actually perform the action
+    #
+  end
+
   def handle_info(:joined_room, socket) do
     game_pid = socket.assigns.game_pid
-    room_name = socket.assigns.room_name
 
     {:ok, players} = GameServer.fetch_players(game_pid)
-    broadcast! socket, room_name <> ":joined", %{players: players}
+    broadcast! socket, "joined_room", %{players: players}
 
     {:noreply, socket}
   end
 
   def handle_info(:picked_team, socket) do
     game_pid = socket.assigns.game_pid
-    room_name = socket.assigns.room_name
 
     {:ok, players} = GameServer.fetch_players(game_pid)
-    broadcast! socket, room_name <> ":team_change", %{players: players}
+    broadcast! socket, "team_change", %{players: players}
 
+    {:noreply, socket}
+  end
+
+  def handle_info(:game_started, socket) do
+    broadcast! socket, "game_started", %{}
+    {:noreply, socket}
+  end
+
+  def handle_out("game_started", _data, socket) do
+    game_pid = socket.assigns.game_pid
+    type = socket.assigns.type
+
+    {:ok, serialized_state} = GameServer.serialize_state(game_pid, type)
+    push(socket, "game_joined", %{state: serialized_state})
     {:noreply, socket}
   end
 
@@ -83,9 +118,13 @@ defmodule CodenamexWeb.RoomChannel do
 
     case GameServer.pick_team(game_pid, player_name, team, type) do
       {:ok, _state} ->
-        assign(socket, :team, team)
+        socket =
+          socket
+          |> assign(:team, team)
+          |> assign(:type, type)
+
         send(self(), :picked_team)
-        {:reply, {:ok, %{message: "joined"}}, socket}
+        {:reply, {:ok, %{message: "joined", team: team, type: type}}, socket}
       {:error, reason} ->
         {:reply, {:error, %{message: reason}}, socket}
     end

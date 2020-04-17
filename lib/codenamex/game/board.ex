@@ -46,14 +46,14 @@ defmodule Codenamex.Game.Board do
     }
   end
 
-  def fetch_state(board, "regular") do
-    regular_state = Map.take(board, @serialization_keys)
-    %{regular_state | cards: board.regular_cards}
+  def serialize_state(board, "regular") do
+    Map.take(board, @serialization_keys)
+    |> Map.put_new(:cards, board.regular_cards)
   end
 
-  def fetch_state(board, "spymaster") do
-    spymaster_state = Map.take(board, @serialization_keys)
-    %{spymaster_state | cards: board.spymaster_cards}
+  def serialize_state(board, "spymaster") do
+    Map.take(board, @serialization_keys)
+    |> Map.put_new(:cards, board.spymaster_cards)
   end
 
   def touch_card(board, word) do

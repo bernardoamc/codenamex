@@ -5,7 +5,6 @@ let Game = {
 
     socket.connect();
 
-    console.log(`room:${codenamex.roomName}`);
     let roomChannel = socket.channel(
       `room:${codenamex.roomName}`,
       { player_name: codenamex.playerName }
@@ -15,16 +14,22 @@ let Game = {
      .receive("ok", resp => console.log("game", resp))
      .receive("error", e => console.log("error joining channel", e))
 
-    roomChannel.on(`${codenamex.roomName}:joined`, (resp) => {
+    roomChannel.on("joined_game", (resp) => {
       console.log(resp);
     })
 
-    roomChannel.on(`${codenamex.roomName}:team_change`, (resp) => {
+    roomChannel.on("team_change", (resp) => {
+      console.log(resp);
+    })
+
+    roomChannel.on("game_started", (resp) => {
       console.log(resp);
     })
 
     roomChannel.push("pick_team", {type: "regular", team: "red"})
       .receive("ok", (resp) => console.log("pick_team:", resp))
+
+    roomChannel.push("start_game")
   }
 };
 

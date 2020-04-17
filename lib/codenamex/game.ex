@@ -22,6 +22,7 @@ defmodule Codenamex.Game do
   ]
 
   @serialization_keys [
+    :status,
     :winner,
     :turn,
     :over
@@ -40,19 +41,28 @@ defmodule Codenamex.Game do
   end
 
   def start(game) do
-    %{game | status: :started}
+    case game do
+      %{status: :started} -> {:error, :already_in_progress}
+      _ -> {:ok, %{game | status: :started}}
+    end
   end
 
-  def fetch_state(game, "regular") do
-    board_state = Board.fetch_state(game.board, "regular")
-    regular_state = Map.take(game, @serialization_keys)
-    {:ok, %{regular_state | board: board_state}}
+  def serialize_state(game, "regular") do
+    serialized_regular_state =
+      game
+      |> Map.take(@serialization_keys)
+      |> Map.put_new(:board, Board.serialize_state(game.board, "regular"))
+
+    {:ok, serialized_regular_state}
   end
 
-  def fetch_state(game, "spymaster") do
-    board_state = Board.fetch_state(game.board, "spymaster")
-    spymaster_state = Map.take(game, @serialization_keys)
-    {:ok, %{spymaster_state | board: board_state}}
+  def serialize_state(game, "spymaster") do
+    serialized_spymaster_state =
+      game
+      |> Map.take(@serialization_keys)
+      |> Map.put_new(:board, Board.serialize_state(game.board, "spymaster"))
+
+    {:ok, serialized_spymaster_state}
   end
 
   def touch_card(game, word, _player_name) do
