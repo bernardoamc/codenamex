@@ -73,75 +73,54 @@ defmodule Codenamex.Game.Board do
     updated_spymaster_card = Card.touch(selected_spymaster_card)
     spymaster_cards = Map.replace!(board.spymaster_cards, word, updated_spymaster_card)
     regular_cards = Map.replace!(board.regular_cards, word, updated_spymaster_card)
-
+    updated_board = %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards}
 
     case updated_spymaster_card.color do
-      "red" ->
-        red_cards = board.red_cards - 1
-        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, red_cards: red_cards}
-      "blue" ->
-        blue_cards = board.blue_cards - 1
-        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, blue_cards: blue_cards}
-      "yellow" ->
-        yellow_cards = board.yellow_cards - 1
-        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, yellow_cards: yellow_cards}
-      "black" ->
-        black_cards = board.black_cards - 1
-        %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards, black_cards: black_cards}
+      "red"    -> %{updated_board | red_cards: board.red_cards - 1}
+      "blue"   -> %{updated_board | blue_cards: board.blue_cards - 1}
+      "yellow" -> %{updated_board | yellow_cards: board.yellow_cards - 1}
+      "black"  -> %{updated_board | black_cards: board.black_cards - 1}
     end
   end
 
   defp setup_board(words, first_team, second_team) do
-    {first_regular_cards, first_sypermaster_cards} = setup_cards(
-      words,
-      first_team,
-      @first_team_cards_count,
-      0
-    )
+    red_offset = 0
+    {first_regular_cards, first_sypermaster_cards} =
+      setup_cards(words, first_team, @first_team_cards_count, red_offset)
 
-    {second_regular_cards, second_sypermaster_cards} = setup_cards(
-      words,
-      second_team,
-      @second_team_cards_count,
-      @first_team_cards_count
-    )
+    blue_offset = @first_team_cards_count
+    {second_regular_cards, second_sypermaster_cards} =
+      setup_cards(words, second_team, @second_team_cards_count, blue_offset)
 
-    {black_regular_cards, black_spymaster_cards} = setup_cards(
-      words,
-      "black",
-      @black_cards_count,
-      @first_team_cards_count + @second_team_cards_count
-    )
+    black_offset = @first_team_cards_count + @second_team_cards_count
+    {black_regular_cards, black_spymaster_cards} =
+      setup_cards(words, "black", @black_cards_count, black_offset)
 
-    {neutral_regular_cards, neutral_spymaster_cards} = setup_cards(
-      words,
-      "yellow",
-      @yellow_cards_count,
-      @first_team_cards_count + @second_team_cards_count + @black_cards_count
-    )
+    yellow_offset = @first_team_cards_count + @second_team_cards_count + @black_cards_count
+    {yellow_regular_cards, yellow_spymaster_cards} =
+      setup_cards(words, "yellow", @yellow_cards_count, yellow_offset)
 
     regular_cards = first_regular_cards
                     ++ second_regular_cards
                     ++ black_regular_cards
-                    ++ neutral_regular_cards
-
+                    ++ yellow_regular_cards
 
     spymaster_cards = first_sypermaster_cards
                       ++ second_sypermaster_cards
                       ++ black_spymaster_cards
-                      ++ neutral_spymaster_cards
+                      ++ yellow_spymaster_cards
 
     {Enum.into(regular_cards, %{}), Enum.into(spymaster_cards, %{})}
   end
 
-  defp setup_cards(words, color, amount_of_cards, skip_cards) do
-    selected_words = select_words(words, amount_of_cards, skip_cards)
+  defp setup_cards(words, color, amount, start_from) do
+    selected_words = select_words(words, amount, start_from)
 
     {setup_regular_cards(selected_words), setup_spymaster_cards(selected_words, color)}
   end
 
-  defp select_words(words, skip_cards, amount_of_cards) do
-    Enum.slice(words, skip_cards, amount_of_cards)
+  defp select_words(words, amount, start_from) do
+    Enum.slice(words, start_from, amount)
   end
 
   defp setup_regular_cards(words) do
