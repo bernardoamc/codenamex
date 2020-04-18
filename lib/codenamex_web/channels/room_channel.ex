@@ -19,14 +19,10 @@ defmodule CodenamexWeb.RoomChannel do
     case GameServer.add_player(game_pid, player_name) do
       {:ok, {players, serialized_state}} ->
         send(self(), :joined_room)
-        {
-          :ok,
-          %{message: "room joined", players: players, serialized_state: serialized_state},
-          socket
-        }
+        {:ok, %{status: :ongoing, players: players, state: serialized_state}, socket}
       {:ok, players} ->
         send(self(), :joined_room)
-        {:ok, %{message: "room joined", players: players}, socket}
+        {:ok, %{status: :lobby, players: players}, socket}
     end
   end
 
@@ -50,18 +46,29 @@ defmodule CodenamexWeb.RoomChannel do
     game_pid = socket.assigns.game_pid
 
     case GameServer.start_game(game_pid) do
-      {:ok, _} -> send(self(), :game_started)
-      _ -> nil
+      {:ok, _} ->
+        broadcast! socket, "game_started", %{}
+      {:error, reason} ->
+        {:reply, {:error, %{reason: reason}}, socket}
     end
 
-    {:noreply, socket}
+    {:reply, {:ok, %{}}, socket}
   end
 
-  def handle_in("touch_card", %{"word" => _word}, _socket) do
-    # TODO: IMPLEMENT, check if player can actually perform the action
-    #
+  def handle_in("touch_card", %{"word" => word}, socket) do
+    game_pid = socket.assigns.game_pid
+    player_name = socket.assigns.player_name
+
+    case GameServer.touch_card(game_pid, word, player_name) do
+      {:ok, serialized_state} ->
+        broadcast! socket, "touched_card", %{state: serialized_state}
+        {:reply, {:ok, %{}}, socket}
+      {:error, reason} ->
+        {:reply, {:error, %{reason: reason}}, socket}
+    end
   end
 
+  # TODO: Might be possible to move this to the original function
   def handle_info(:joined_room, socket) do
     game_pid = socket.assigns.game_pid
 
@@ -71,6 +78,7 @@ defmodule CodenamexWeb.RoomChannel do
     {:noreply, socket}
   end
 
+  # TODO: Might be possible to move this to the original function
   def handle_info(:picked_team, socket) do
     game_pid = socket.assigns.game_pid
 
@@ -80,17 +88,15 @@ defmodule CodenamexWeb.RoomChannel do
     {:noreply, socket}
   end
 
-  def handle_info(:game_started, socket) do
-    broadcast! socket, "game_started", %{}
-    {:noreply, socket}
-  end
-
+  # Intercepting the broadcast to forward the right game state
+  # based on the type of player
   def handle_out("game_started", _data, socket) do
     game_pid = socket.assigns.game_pid
     type = socket.assigns.type
 
     {:ok, serialized_state} = GameServer.serialize_state(game_pid, type)
-    push(socket, "game_joined", %{state: serialized_state})
+    push(socket, "game_started", %{state: serialized_state})
+
     {:noreply, socket}
   end
 
@@ -124,9 +130,9 @@ defmodule CodenamexWeb.RoomChannel do
           |> assign(:type, type)
 
         send(self(), :picked_team)
-        {:reply, {:ok, %{message: "joined", team: team, type: type}}, socket}
+        {:reply, {:ok, %{result: :ok, team: team, type: type}}, socket}
       {:error, reason} ->
-        {:reply, {:error, %{message: reason}}, socket}
+        {:reply, {:error, %{result: :error, reason: reason}}, socket}
     end
   end
 
