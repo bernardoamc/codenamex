@@ -26,11 +26,6 @@ defmodule Codenamex.Game.Board do
     yellow_cards: @yellow_cards_count
   ]
 
-  @serialization_keys [
-    :red_cards,
-    :blue_cards
-  ]
-
   def setup() do
     [first_team, second_team] = Team.pick_order()
     words = Dictionary.fetch(@cards_count)
@@ -46,16 +41,6 @@ defmodule Codenamex.Game.Board do
     }
   end
 
-  def serialize_state(board, "regular") do
-    Map.take(board, @serialization_keys)
-    |> Map.put_new(:cards, board.regular_cards)
-  end
-
-  def serialize_state(board, "spymaster") do
-    Map.take(board, @serialization_keys)
-    |> Map.put_new(:cards, board.spymaster_cards)
-  end
-
   def touch_card(board, word) do
     selected_regular_card = Map.fetch!(board.regular_cards, word)
 
@@ -63,9 +48,9 @@ defmodule Codenamex.Game.Board do
       true ->
         selected_spymaster_card = Map.fetch!(board.spymaster_cards, word)
         updated_board = update_state(board, word, selected_spymaster_card)
-        {:ok, {selected_spymaster_card.color, updated_board}}
+        {:ok, {selected_spymaster_card, updated_board}}
       false ->
-        {:error, board}
+        {:error, :card_already_touched}
     end
   end
 

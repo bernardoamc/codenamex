@@ -16,16 +16,9 @@ defmodule Codenamex.Game do
     board: nil,
     winner: nil,
     turn: nil,
-    touched_color: nil,
+    touched_card: nil,
     over: false,
     status: :pending
-  ]
-
-  @serialization_keys [
-    :status,
-    :winner,
-    :turn,
-    :over
   ]
 
   def setup do
@@ -47,30 +40,13 @@ defmodule Codenamex.Game do
     end
   end
 
-  def serialize_state(game, "regular") do
-    serialized_regular_state =
-      game
-      |> Map.take(@serialization_keys)
-      |> Map.put_new(:board, Board.serialize_state(game.board, "regular"))
-
-    {:ok, serialized_regular_state}
-  end
-
-  def serialize_state(game, "spymaster") do
-    serialized_spymaster_state =
-      game
-      |> Map.take(@serialization_keys)
-      |> Map.put_new(:board, Board.serialize_state(game.board, "spymaster"))
-
-    {:ok, serialized_spymaster_state}
-  end
-
   def touch_card(game, word, _player_name) do
+    # TODO: Validate player team before allowing touch
     case Board.touch_card(game.board, word) do
-      {:ok, {touched_color, updated_board}} ->
-        {:ok, update_state(game, updated_board, touched_color)}
-      {:error, _} ->
-        {:error, game}
+      {:ok, {touched_card, updated_board}} ->
+        {:ok, update_state(game, updated_board, touched_card)}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -130,47 +106,47 @@ defmodule Codenamex.Game do
     end
   end
 
-  defp update_state(game, updated_board, "black") do
-    %{game | board: updated_board, touched_color: "black", winner: next_team(game.turn), over: true}
+  defp update_state(game, updated_board, %{color: "black"} = touched_card) do
+    %{game | board: updated_board, touched_card: touched_card, winner: next_team(game.turn), over: true}
   end
 
-  defp update_state(game, updated_board, "yellow") do
-    %{game | board: updated_board, touched_color: "yellow", turn: next_team(game.turn)}
+  defp update_state(game, updated_board, %{color: "yellow"} = touched_card) do
+    %{game | board: updated_board, touched_card: touched_card, turn: next_team(game.turn)}
   end
 
-  defp update_state(game = %{turn: "red"}, updated_board, "red") do
+  defp update_state(%{turn: "red"} = game, updated_board, %{color: "red"} = touched_card) do
     case updated_board.red_cards do
       0 ->
-        %{game | board: updated_board, touched_color: "red", winner: "red", over: true}
+        %{game | board: updated_board, touched_card: touched_card, winner: "red", over: true}
       _ ->
-        %{game | board: updated_board, touched_color: "red"}
+        %{game | board: updated_board, touched_card: touched_card}
     end
   end
 
-  defp update_state(game = %{turn: "red"}, updated_board, "blue") do
+  defp update_state(game = %{turn: "red"}, updated_board, %{color: "blue"} = touched_card) do
     case updated_board.blue_cards do
       0 ->
-        %{game | board: updated_board, touched_color: "blue", winner: "blue", over: true}
+        %{game | board: updated_board, touched_card: touched_card, winner: "blue", over: true}
       _ ->
-        %{game | board: updated_board, touched_color: "blue", turn: "blue"}
+        %{game | board: updated_board, touched_card: touched_card, turn: "blue"}
     end
   end
 
-  defp update_state(game = %{turn: "blue"}, updated_board, "blue") do
+  defp update_state(game = %{turn: "blue"}, updated_board, %{color: "blue"} = touched_card) do
     case updated_board.blue_cards do
       0 ->
-        %{game | board: updated_board, touched_color: "blue", winner: "blue", over: true}
+        %{game | board: updated_board, touched_card: touched_card, winner: "blue", over: true}
       _ ->
-        %{game | board: updated_board, touched_color: "blue"}
+        %{game | board: updated_board, touched_card: touched_card}
     end
   end
 
-  defp update_state(game = %{turn: "blue"}, updated_board, "red") do
+  defp update_state(game = %{turn: "blue"}, updated_board, %{color: "red"} = touched_card) do
     case updated_board.red_cards do
       0 ->
-        %{game | board: updated_board, touched_color: "red", winner: "red", over: true}
+        %{game | board: updated_board, touched_card: touched_card, winner: "red", over: true}
       _ ->
-        %{game | board: updated_board, touched_color: "red", turn: "red"}
+        %{game | board: updated_board, touched_card: touched_card, turn: "red"}
     end
   end
 
