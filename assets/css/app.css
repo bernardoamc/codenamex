@@ -10,6 +10,8 @@ html {
   box-sizing: inherit;
 }
 
+.container { padding: 0; }
+
 .game-board__card-row {
   display: flex;
   flex-direction: row;
@@ -22,10 +24,12 @@ html {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 100px;
+  min-height: 80px;
   background-color: cornsilk;
-  margin: 10px;
-  box-shadow: 5px 5px 0px 0px #eae5d3;
+  margin: 2px;
+  box-shadow: 2px 2px 0px 0px #eae5d3;
   cursor: pointer;
   user-select: none;
+  font-size: 12px;
+  word-break: break-all;
 }
