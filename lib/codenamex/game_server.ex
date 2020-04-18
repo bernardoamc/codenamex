@@ -6,6 +6,7 @@ defmodule Codenamex.GameServer do
 
   use GenServer
   alias Codenamex.Game
+  alias Codenamex.GameSerializer
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, [])
@@ -43,6 +44,10 @@ defmodule Codenamex.GameServer do
     GenServer.call(pid, {:serialize_state, type})
   end
 
+  def serialize_state(pid) do
+    GenServer.call(pid, :serialize_touch_state)
+  end
+
   def touch_card(pid, word, player_name) do
     GenServer.call(pid, {:touch_card, word, player_name})
   end
@@ -59,13 +64,6 @@ defmodule Codenamex.GameServer do
     {:reply, {:ok, new_state}, new_state}
   end
 
-  def handle_call({:touch_card, word, player_name}, _from, state) do
-    case Game.touch_card(state, word, player_name) do
-      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
-      {:error, _} -> {:reply, :error, state}
-    end
-  end
-
   def handle_call({:add_player, player_name}, _from, state) do
     {:ok, new_state} = Game.add_player(state, player_name)
     players = Game.fetch_players(new_state)
@@ -74,8 +72,8 @@ defmodule Codenamex.GameServer do
       %{status: :pending} ->
         {:reply, {:ok, players}, new_state}
       %{status: :started} ->
-        {:ok, regular_state} = Game.serialize_state(new_state, "regular")
-        {:reply, {:ok, {players, regular_state}}, new_state}
+        serialized_state = GameSerializer.serialize(:state, new_state, "regular")
+        {:reply, {:ok, {players, serialized_state}}, new_state}
     end
   end
 
@@ -104,8 +102,22 @@ defmodule Codenamex.GameServer do
     end
   end
 
+  def handle_call({:touch_card, word, player_name}, _from, state) do
+    case Game.touch_card(state, word, player_name) do
+      {:ok, new_state} ->
+        serialized_state = GameSerializer.serialize(:touch_card, new_state)
+        {:reply, {:ok, serialized_state}, new_state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
   def handle_call({:serialize_state, type}, _from, state) do
-    {:ok, serialized_state} = Game.serialize_state(state, type)
+    serialized_state = GameSerializer.serialize(:state, state, type)
+    {:reply, {:ok, serialized_state}, state}
+  end
+
+  def handle_call(:serialize_touch_state, _from, state) do
+    serialized_state = GameSerializer.serialize(:touch_card, state)
     {:reply, {:ok, serialized_state}, state}
   end
 end
