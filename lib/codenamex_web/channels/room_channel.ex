@@ -68,7 +68,6 @@ defmodule CodenamexWeb.RoomChannel do
     end
   end
 
-  # TODO: Might be possible to move this to the original function
   def handle_info(:joined_room, socket) do
     game_pid = socket.assigns.game_pid
 
@@ -78,7 +77,6 @@ defmodule CodenamexWeb.RoomChannel do
     {:noreply, socket}
   end
 
-  # TODO: Might be possible to move this to the original function
   def handle_info(:picked_team, socket) do
     game_pid = socket.assigns.game_pid
 
