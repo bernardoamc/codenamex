@@ -40,13 +40,10 @@ defmodule Codenamex.Game do
     end
   end
 
-  def touch_card(game, word, _player_name) do
-    # TODO: Validate player team before allowing touch
-    case Board.touch_card(game.board, word) do
-      {:ok, {touched_card, updated_board}} ->
-        {:ok, update_state(game, updated_board, touched_card)}
-      {:error, reason} ->
-        {:error, reason}
+  def touch_card(game, word, player_name) do
+    case allowed_to_touch_card?(game, player_name) do
+      true -> touch_card(game, word)
+      false -> {:error, :wrong_turn}
     end
   end
 
@@ -106,6 +103,15 @@ defmodule Codenamex.Game do
     end
   end
 
+  defp touch_card(game, word) do
+    case Board.touch_card(game.board, word) do
+      {:ok, {touched_card, updated_board}} ->
+        {:ok, update_state(game, updated_board, touched_card)}
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   defp update_state(game, updated_board, %{color: "black"} = touched_card) do
     %{game | board: updated_board, touched_card: touched_card, winner: next_team(game.turn), over: true}
   end
@@ -150,13 +156,29 @@ defmodule Codenamex.Game do
     end
   end
 
+  defp allowed_to_touch_card?(game, player_name) do
+    team_color = find_team(game, player_name)
+    team = fetch_team(game, team_color)
+    player = Team.fetch_player(team, player_name)
+
+    (team_color == game.turn) && Player.can_select_word?(player)
+  end
+
   defp find_team(game, player_name) do
     cond do
-      Map.has_key?(game.guests, player_name) -> "guest"
-      Map.has_key?(game.red_team, player_name) -> "red"
-      Map.has_key?(game.blue_team, player_name) -> "blue"
+      Team.has_player?(game.guests, player_name) -> "guest"
+      Team.has_player?(game.red_team, player_name) -> "red"
+      Team.has_player?(game.blue_team, player_name) -> "blue"
       true -> nil
     end
+  end
+
+  defp fetch_team(game, "red") do
+    game.red_team
+  end
+
+  defp fetch_team(game, "blue") do
+    game.blue_team
   end
 
   defp remove_from_team(game, player_name, "guest") do

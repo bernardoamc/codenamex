@@ -32,8 +32,20 @@ defmodule Codenamex.Game.Team do
     %{team | players: updated_players}
   end
 
+  def has_player?(team, name) do
+    Map.has_key?(team.players, name)
+  end
+
+  def fetch_player(team, name) do
+    Map.fetch!(team.players, name)
+  end
+
   def fetch_players(team) do
     Map.values(team.players)
+  end
+
+  def spymaster?(team, player_name) do
+    team.spymaster == player_name
   end
 
   def pick_order() do

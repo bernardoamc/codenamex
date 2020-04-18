@@ -47,8 +47,7 @@ defmodule Codenamex.Game.Board do
     case Card.touchable?(selected_regular_card) do
       true ->
         selected_spymaster_card = Map.fetch!(board.spymaster_cards, word)
-        updated_board = update_state(board, word, selected_spymaster_card)
-        {:ok, {selected_spymaster_card, updated_board}}
+        {:ok, update_state(board, word, selected_spymaster_card)}
       false ->
         {:error, :card_already_touched}
     end
@@ -61,10 +60,10 @@ defmodule Codenamex.Game.Board do
     updated_board = %{board | spymaster_cards: spymaster_cards, regular_cards: regular_cards}
 
     case updated_spymaster_card.color do
-      "red"    -> %{updated_board | red_cards: board.red_cards - 1}
-      "blue"   -> %{updated_board | blue_cards: board.blue_cards - 1}
-      "yellow" -> %{updated_board | yellow_cards: board.yellow_cards - 1}
-      "black"  -> %{updated_board | black_cards: board.black_cards - 1}
+      "red"    -> {updated_spymaster_card, %{updated_board | red_cards: board.red_cards - 1}}
+      "blue"   -> {updated_spymaster_card, %{updated_board | blue_cards: board.blue_cards - 1}}
+      "yellow" -> {updated_spymaster_card, %{updated_board | yellow_cards: board.yellow_cards - 1}}
+      "black"  -> {updated_spymaster_card, %{updated_board | black_cards: board.black_cards - 1}}
     end
   end
 

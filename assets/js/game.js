@@ -27,7 +27,6 @@ let Game = {
       let cards = resp.state.board.cards
       let words = Object.keys(cards)
 
-      console.log("word", currentCard)
       roomChannel.push("touch_card", {word: words[0]})
         .receive("ok", (resp) => console.log("touch_card:", resp))
     })
