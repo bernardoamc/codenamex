@@ -23,7 +23,7 @@ const SAMPLE_WORDS = [
   "Bomb",
   "Undertaker",
   "Board",
-  "Pheonix",
+  "Phoenix",
   "Night",
   "Hotel",
   "Gas",
