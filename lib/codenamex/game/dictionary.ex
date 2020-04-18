@@ -387,7 +387,7 @@ defmodule Codenamex.Game.Dictionary do
     "Beach",
     "Bell",
     "Leprechaun",
-    "Pheonix",
+    "Phoenix",
     "Force",
     "Boom",
     "Fork",
