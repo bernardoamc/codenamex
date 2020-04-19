@@ -1,13 +1,21 @@
-import { observable } from "mobx";
+import { observable, action } from "mobx";
 
 let Game = {
   init(socket, element) {
-    let gameState = observable({
-      status: "uninitialized"
-    });
-
     let codenamex = window.codenamex || {};
     if(!codenamex.roomName) { return }
+
+    let gameState = observable({
+      status: "uninitialized",
+      players: null,
+      playerName: codenamex.playerName,
+      roomName: codenamex.roomName,
+
+      initialize: action(function (status, players) {
+        this.status = status;
+        this.players = players;
+      })
+    });
 
     socket.connect();
 
@@ -19,8 +27,7 @@ let Game = {
     roomChannel.join()
       .receive("ok", resp => {
         console.log("game", resp);
-        gameState.status = resp.status;
-        gameState.players = resp.players;
+        gameState.initialize(resp.status, resp.players);
       })
       .receive("error", e => console.log("error joining channel", e))
 
@@ -29,6 +36,7 @@ let Game = {
     })
 
     roomChannel.on("team_change", (resp) => {
+      gameState.players = resp.players;
       console.log("broadcasted_team_change", resp);
     })
 

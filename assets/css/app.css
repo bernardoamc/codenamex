@@ -33,3 +33,40 @@ html {
   font-size: 12px;
   word-break: break-all;
 }
+
+.lobby__guests {
+  background-color: #f1f1f1;
+  padding: 10px;
+}
+
+.lobby__teams {
+  display: flex;
+}
+
+.lobby__team {
+  flex-grow: 1;
+  padding: 10px;
+}
+
+.lobby__team--blue {
+  background-color: #79C9F6;
+}
+
+.lobby__team--red {
+  background-color: #EDA9A0;
+}
+
+.lobby__guests ul li,
+.lobby__team ul li {
+  display: block;
+  padding: 10px;
+  background: white;
+  box-shadow: 5px 5px 0 0 rgba(0,0,0,0.15);
+}
+
+.lobby__team-spymaster {
+  background-color: rgba(255,255,255,0.4);
+  min-height: 100px;
+  margin: 0 -10px 10px;
+  padding: 10px;
+}
