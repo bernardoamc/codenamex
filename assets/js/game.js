@@ -31,6 +31,14 @@ export class GameState {
     };
   }
 
+  @computed get cards() {
+    if (this.status !== "game" || !this.state) {
+      return {};
+    }
+
+    return this.state.board.cards;
+  }
+
   constructor({ roomName, playerName, socket }) {
     this.roomName = roomName;
     this.playerName = playerName;

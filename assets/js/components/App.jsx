@@ -14,8 +14,10 @@ const Route = inject("gameState")(
         return <Loading />;
       case "lobby":
         return <Lobby />;
-      default:
+      case "game":
         return <Game />;
+      default:
+        return <h1>Something went wrong</h1>;
     }
   })
 );

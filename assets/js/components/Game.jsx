@@ -1,47 +1,41 @@
 import React from "react";
-import _ from "lodash";
-
-// Codenamex.Game.Dictionary.fetch(25)
-const SAMPLE_WORDS = [
-  "Glass",
-  "Plate",
-  "Moscow",
-  "Teacher",
-  "Jupiter",
-  "Battery",
-  "Time",
-  "Casino",
-  "Bank",
-  "Triangle",
-  "Cold",
-  "France",
-  "Bill",
-  "Draft",
-  "Lap",
-  "King",
-  "Vet",
-  "Bomb",
-  "Undertaker",
-  "Board",
-  "Phoenix",
-  "Night",
-  "Hotel",
-  "Gas",
-  "Opera",
-];
+import { inject, observer } from "mobx-react";
 
 const ROW_LENGTH = 5;
 
-export default function App() {
-  const rows = _.chain(SAMPLE_WORDS)
-    .map((word) => (
-      <div className="game-board__card">
-        <div className="game-board__card-word">{word}</div>
-      </div>
-    ))
-    .chunk(5)
-    .map((cards) => <div className="game-board__card-row">{cards}</div>)
-    .value();
+function chunk(array, size) {
+  return array.reduce((result, current) => {
+    let group = result[result.length - 1];
 
-  return <div className="game-board">{rows}</div>;
+    if (!group || group.length === size) {
+      group = [];
+      result.push(group);
+    }
+
+    group.push(current);
+
+    return result;
+  }, []);
 }
+
+const Game = inject("gameState")(
+  observer(function ({ gameState }) {
+    const cells = Object.values(gameState.cards).map((card) => {
+      return (
+        <div key={card.word} className="game-board__card">
+          <div className="game-board__card-word">{card.word}</div>
+        </div>
+      );
+    });
+
+    const rows = chunk(cells, ROW_LENGTH).map((cards, rowIndex) => (
+      <div key={rowIndex} className="game-board__card-row">
+        {cards}
+      </div>
+    ));
+
+    return <div className="game-board">{rows}</div>;
+  })
+);
+
+export default Game;
