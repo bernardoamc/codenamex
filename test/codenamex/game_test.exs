@@ -37,6 +37,24 @@ defmodule Codenamex.GameTest do
     assert {:ok, %Game{guests: ^guests_team}} = Game.add_player(game, new_guest.name)
   end
 
+  test "pick_team/3 switch players from teams" do
+    game = Game.setup()
+    player = Player.setup("codenames", "regular")
+
+    empty_team = Team.setup()
+    {:ok, expected_red_team} = Team.setup() |> Team.add_player(player, "regular")
+    {:ok, expected_blue_team} = Team.setup() |> Team.add_player(player, "regular")
+
+    # Joining as a guest
+    assert {:ok, updated_game} = Game.add_player(game, player.name)
+    # Moving to the red team
+    assert {:ok, %Game{red_team: ^expected_red_team, guests: ^empty_team} = updated_game}
+      = Game.pick_team(updated_game, player.name, "red", "regular")
+    # Moving from red to the blue team
+    assert {:ok, %Game{red_team: ^empty_team, blue_team: ^expected_blue_team}}
+      = Game.pick_team(updated_game, player.name, "blue", "regular")
+  end
+
   test "touch_card/3 returns an error when it's not the players turn" do
     game = setup_game()
     opponent_team = Game.next_team(game.turn)

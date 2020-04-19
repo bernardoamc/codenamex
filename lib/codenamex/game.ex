@@ -69,21 +69,23 @@ defmodule Codenamex.Game do
 
   def pick_team(game, player_name, "red", type) do
     player = Player.setup(player_name, type)
-    updated_guests = Team.remove_player(game.guests, player_name)
+    current_team = find_team(game, player_name)
+    updated_game = remove_from_team(game, player_name, current_team)
 
     case Team.add_player(game.red_team, player, type) do
-      {:ok, team} -> {:ok, %{game | red_team: team, guests: updated_guests}}
-      {:error, reason} -> {:error, reason}
+      {:ok, team} -> {:ok, %{updated_game | red_team: team}}
+      error -> error
     end
   end
 
   def pick_team(game, player_name, "blue", type) do
     player = Player.setup(player_name, type)
-    updated_guests = Team.remove_player(game.guests, player_name)
+    current_team = find_team(game, player_name)
+    updated_game = remove_from_team(game, player_name, current_team)
 
     case Team.add_player(game.blue_team, player, type) do
-      {:ok, team} -> {:ok, %{game | blue_team: team, guests: updated_guests}}
-      {:error, reason} -> {:error, reason}
+      {:ok, team} -> {:ok, %{updated_game | blue_team: team}}
+      error -> error
     end
   end
 

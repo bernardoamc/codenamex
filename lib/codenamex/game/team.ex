@@ -39,7 +39,11 @@ defmodule Codenamex.Game.Team do
 
   def remove_player(team, player_name) do
     updated_players = Map.delete(team.players, player_name)
-    %{team | players: updated_players}
+
+    case spymaster?(team, player_name) do
+      false -> %{team | players: updated_players}
+      true -> %{team | players: updated_players, spymaster: nil}
+    end
   end
 
   def has_player?(team, name) do
