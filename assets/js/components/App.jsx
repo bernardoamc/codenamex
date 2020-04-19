@@ -1,47 +1,18 @@
-import React from "react";
-import _ from "lodash";
+import React from 'react';
+import {observer} from 'mobx-react';
+import Lobby from "./Lobby";
+import Game from "./Game";
 
-// Codenamex.Game.Dictionary.fetch(25)
-const SAMPLE_WORDS = [
-  "Glass",
-  "Plate",
-  "Moscow",
-  "Teacher",
-  "Jupiter",
-  "Battery",
-  "Time",
-  "Casino",
-  "Bank",
-  "Triangle",
-  "Cold",
-  "France",
-  "Bill",
-  "Draft",
-  "Lap",
-  "King",
-  "Vet",
-  "Bomb",
-  "Undertaker",
-  "Board",
-  "Phoenix",
-  "Night",
-  "Hotel",
-  "Gas",
-  "Opera",
-];
+const App = observer(function({ gameState }){
+  switch (gameState.status) {
+    case "uninitialized":
+      return <h1>Loading</h1>;
+    case "lobby":
+      return <Lobby gameState={gameState}/>;
+    default:
+      return <Game/>;
+  }
+});
 
-const ROW_LENGTH = 5;
+export default App;
 
-export default function App() {
-  const rows = _.chain(SAMPLE_WORDS)
-    .map((word) => (
-      <div className="game-board__card">
-        <div className="game-board__card-word">{word}</div>
-      </div>
-    ))
-    .chunk(5)
-    .map((cards) => <div className="game-board__card-row">{cards}</div>)
-    .value();
-
-  return <div className="game-board">{rows}</div>;
-}

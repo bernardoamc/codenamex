@@ -17,13 +17,14 @@ import "phoenix_html"
 import socket from "./socket"
 import Game from "./game"
 
-Game.init(socket)
+let gameState = Game.init(socket);
 
+import 'mobx-react-lite/batchingForReactDom';
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./components/App";
 
 ReactDOM.render(
-  React.createElement(App, null), 
+  React.createElement(App, { gameState }), 
   document.getElementById("game")
 );
