@@ -94,7 +94,6 @@ export class GameState {
 
     let player = blue_team.find((player) => player.name === this.playerName);
     if (player) {
-      console.log(player);
       return { team: "blue", isSpymaster: player.spymaster };
     }
 
@@ -104,6 +103,12 @@ export class GameState {
     }
 
     return guest;
+  }
+
+  @computed get playerCanPlay() {
+    const status = this.playerStatus;
+
+    return status.team === this.currentTurn && (!this.isOver);
   }
 
   constructor({ roomName, playerName, socket }) {

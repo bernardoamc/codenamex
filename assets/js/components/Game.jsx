@@ -38,7 +38,7 @@ const Card = inject("gameState")(
       <button
         className={classNames.join(" ")}
         onClick={handleOnClick}
-        disabled={card.touched}
+        disabled={card.touched || !gameState.playerCanPlay}
       >
         <div className="game-board__card-word">{card.word}</div>
       </button>
@@ -66,7 +66,7 @@ const Game = inject("gameState")(
       <div>
         <h1>
           Team {gameState.playerStatus.team}
-          {gameState.playerStatus.isSpymaster ? (" (Spymaster)") : null}
+          {gameState.playerStatus.isSpymaster ? " (Spymaster)" : null}
         </h1>
         <table>
           <tbody>
@@ -97,7 +97,9 @@ const Game = inject("gameState")(
           </tbody>
         </table>
         <div className="game-board">{rows}</div>
-        <button onClick={handleNextTurn}>Next turn</button>
+        <button onClick={handleNextTurn} disabled={!gameState.playerCanPlay}>
+          Next turn
+        </button>
       </div>
     );
   })
