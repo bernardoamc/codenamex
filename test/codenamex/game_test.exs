@@ -55,6 +55,24 @@ defmodule Codenamex.GameTest do
       = Game.pick_team(updated_game, player.name, "blue", "regular")
   end
 
+  test "pick_team/3 switch players from regular to spymaster" do
+    player = Player.setup("codenames", "regular")
+    {:ok, game} = Game.setup() |> Game.add_player(player.name)
+    {:ok, expected_regular} = Team.setup() |> Team.add_player(player, "regular")
+    player = Player.setup("codenames", "spymaster")
+    {:ok, expected_spymaster} = Team.setup() |> Team.add_player(player, "spymaster")
+
+    # Moving to the red team as regular
+    assert {:ok, %Game{red_team: ^expected_regular} = updated_game}
+      = Game.pick_team(game, player.name, "red", "regular")
+    # Changing role to spymaster
+    assert {:ok, %Game{red_team: ^expected_spymaster} = updated_game}
+      = Game.pick_team(updated_game, player.name, "red", "spymaster")
+    # Changing role to regular again
+    assert {:ok, %Game{red_team: ^expected_regular}}
+      = Game.pick_team(updated_game, player.name, "red", "regular")
+  end
+
   test "next_turn/2 returns an error when its not players turn" do
     game = setup_game()
     opponent_team = Game.next_team(game.turn)

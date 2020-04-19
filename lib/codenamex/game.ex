@@ -79,7 +79,7 @@ defmodule Codenamex.Game do
     current_team = find_team(game, player_name)
     updated_game = remove_from_team(game, player_name, current_team)
 
-    case Team.add_player(game.red_team, player, type) do
+    case Team.add_player(updated_game.red_team, player, type) do
       {:ok, team} -> {:ok, %{updated_game | red_team: team}}
       error -> error
     end
@@ -90,7 +90,7 @@ defmodule Codenamex.Game do
     current_team = find_team(game, player_name)
     updated_game = remove_from_team(game, player_name, current_team)
 
-    case Team.add_player(game.blue_team, player, type) do
+    case Team.add_player(updated_game.blue_team, player, type) do
       {:ok, team} -> {:ok, %{updated_game | blue_team: team}}
       error -> error
     end
