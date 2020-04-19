@@ -58,6 +58,7 @@ html {
 
 .game-board__card--black {
   background-color: black;
+  color: white;
 }
 
 .game-board__card--yellow {
