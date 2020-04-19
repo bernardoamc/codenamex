@@ -18,6 +18,7 @@ html {
 }
 
 .game-board__card {
+  color: inherit;
   flex-grow: 1;
   flex-basis: 20%;
   text-align: center;
@@ -25,11 +26,8 @@ html {
   flex-direction: column;
   justify-content: center;
   min-height: 80px;
-  background-color: cornsilk;
+  background-color: #f1f1f1;
   margin: 2px;
-  box-shadow: 2px 2px 0px 0px #eae5d3;
-  cursor: pointer;
-  user-select: none;
   font-size: 12px;
   word-break: break-all;
 }
@@ -48,12 +46,22 @@ html {
   padding: 10px;
 }
 
-.lobby__team--blue {
+.lobby__team--blue,
+.game-board__card--blue {
   background-color: #79C9F6;
 }
 
-.lobby__team--red {
+.lobby__team--red ,
+.game-board__card--red {
   background-color: #EDA9A0;
+}
+
+.game-board__card--black {
+  background-color: black;
+}
+
+.game-board__card--yellow {
+  background-color: cornsilk;
 }
 
 .lobby__guests ul li,

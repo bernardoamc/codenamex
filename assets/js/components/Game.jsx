@@ -18,15 +18,39 @@ function chunk(array, size) {
   }, []);
 }
 
+const Card = inject("gameState")(
+  observer(({ card, gameState }) => {
+    const classNames = ["game-board__card"];
+
+    if (card.color) {
+      classNames.push(`game-board__card--${card.color}`);
+    }
+
+    if (card.touched) {
+      classNames.push("game-board__card--touched");
+    }
+
+    const handleOnClick = () => {
+      gameState.touchCard(card.word);
+    };
+
+    return (
+      <button
+        className={classNames.join(" ")}
+        onClick={handleOnClick}
+        disabled={card.touched}
+      >
+        <div className="game-board__card-word">{card.word}</div>
+      </button>
+    );
+  })
+);
+
 const Game = inject("gameState")(
   observer(function ({ gameState }) {
-    const cells = Object.values(gameState.cards).map((card) => {
-      return (
-        <div key={card.word} className="game-board__card">
-          <div className="game-board__card-word">{card.word}</div>
-        </div>
-      );
-    });
+    const cells = Object.values(gameState.cards).map((card, cardIndex) => (
+      <Card key={cardIndex} card={card} />
+    ));
 
     const rows = chunk(cells, ROW_LENGTH).map((cards, rowIndex) => (
       <div key={rowIndex} className="game-board__card-row">
@@ -34,7 +58,48 @@ const Game = inject("gameState")(
       </div>
     ));
 
-    return <div className="game-board">{rows}</div>;
+    const handleNextTurn = () => {
+      gameState.nextTurn();
+    };
+
+    return (
+      <div>
+        <h1>
+          Team {gameState.playerStatus.team}
+          {gameState.playerStatus.isSpymaster ? (" (Spymaster)") : null}
+        </h1>
+        <table>
+          <tbody>
+            <tr>
+              <td>Current turn</td>
+              <td>{gameState.currentTurn}</td>
+            </tr>
+            <tr>
+              <td>Blue cards</td>
+              <td>
+                {gameState.blueCardsFound} / {gameState.blueCards}
+              </td>
+            </tr>
+            <tr>
+              <td>Red cards</td>
+              <td>
+                {gameState.redCardsFound} / {gameState.redCards}
+              </td>
+            </tr>
+            <tr>
+              <td>Is over?</td>
+              <td>{gameState.isOver ? "Yes" : "No"}</td>
+            </tr>
+            <tr>
+              <td>Winner</td>
+              <td>{gameState.winner ?? "None"}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="game-board">{rows}</div>
+        <button onClick={handleNextTurn}>Next turn</button>
+      </div>
+    );
   })
 );
 

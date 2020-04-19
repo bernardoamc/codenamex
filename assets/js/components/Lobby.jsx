@@ -2,7 +2,7 @@ import React from "react";
 import {observer, inject} from 'mobx-react';
 
 const Team = inject("gameState")(observer(function ({ teamColor, title, gameState, team }) {
-  const handleSpyMasterClick = () => {
+  const handleSpymasterClick = () => {
     gameState.pickTeam(teamColor, "spymaster");
   };
 
@@ -15,12 +15,12 @@ const Team = inject("gameState")(observer(function ({ teamColor, title, gameStat
       <h2>{title}</h2>
       <div className="lobby__team-spymaster">
         <h3>Spymaster</h3>
-        {team.spyMaster ? (
+        {team.spymaster ? (
           <ul>
-            <li>{team.spyMaster.name}</li>
+            <li>{team.spymaster.name}</li>
           </ul>
         ) : (
-          <button onClick={handleSpyMasterClick}>Select</button>
+          <button onClick={handleSpymasterClick}>Select</button>
         )}
       </div>
       <h3>Players</h3>
