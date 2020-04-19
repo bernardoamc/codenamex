@@ -4,6 +4,7 @@ defmodule Codenamex.GameTest do
   alias Codenamex.Game.BoardSerializer
   alias Codenamex.Game.Team
   alias Codenamex.Game.Card
+  alias Codenamex.Game.Player
 
   test "setup/0 setups the game state" do
     game = Game.setup()
@@ -18,6 +19,22 @@ defmodule Codenamex.GameTest do
   test "start/1 returns an error when game has already started" do
     game = %{ Game.setup() | status: :started}
     assert  {:error, :already_in_progress} = Game.start(game)
+  end
+
+  test "add_player/2 returns an error when nickname already exists" do
+    game = Game.setup()
+    guest_name = "codenames"
+
+    {:ok, new_state} = Game.add_player(game, guest_name)
+    assert {:error, :player_already_exists} = Game.add_player(new_state, guest_name)
+  end
+
+  test "add_player/2 adds player to guests list" do
+    game = Game.setup()
+    new_guest = Player.setup("codenames", "regular")
+    {:ok, guests_team} = Team.setup() |> Team.add_player(new_guest, "regular")
+
+    assert {:ok, %Game{guests: ^guests_team}} = Game.add_player(game, new_guest.name)
   end
 
   test "touch_card/3 returns an error when it's not the players turn" do

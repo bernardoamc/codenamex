@@ -58,13 +58,14 @@ defmodule Codenamex.Game do
     %{guests: guests, red_team: red, blue_team: blue}
   end
 
-  # TODO: Make nicknames unique
-  def add_player(game, player_name)  do
-    player = Player.setup(player_name, "regular")
+   def add_player(game, player_name)  do
+     player = Player.setup(player_name, "regular")
 
-    {:ok, team} = Team.add_player(game.guests, player, "regular")
-    {:ok, %{game | guests: team}}
-  end
+     case Team.add_player(game.guests, player, "regular") do
+       {:ok, team} -> {:ok, %{game | guests: team}}
+       error -> error
+     end
+   end
 
   def pick_team(game, player_name, "red", type) do
     player = Player.setup(player_name, type)

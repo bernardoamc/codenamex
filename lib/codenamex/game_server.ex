@@ -65,15 +65,19 @@ defmodule Codenamex.GameServer do
   end
 
   def handle_call({:add_player, player_name}, _from, state) do
-    {:ok, new_state} = Game.add_player(state, player_name)
-    players = Game.fetch_players(new_state)
+    case Game.add_player(state, player_name) do
+      {:error, reason}  ->
+        {:reply, {:ok, reason}, state}
+      {:ok, new_state} ->
+        players = Game.fetch_players(new_state)
 
-    case new_state do
-      %{status: :pending} ->
-        {:reply, {:ok, players}, new_state}
-      %{status: :started} ->
-        serialized_state = GameSerializer.serialize(:state, new_state, "regular")
-        {:reply, {:ok, {players, serialized_state}}, new_state}
+        case new_state do
+          %{status: :pending} ->
+            {:reply, {:ok, players}, new_state}
+          %{status: :started} ->
+            serialized_state = GameSerializer.serialize(:state, new_state, "regular")
+            {:reply, {:ok, {players, serialized_state}}, new_state}
+        end
     end
   end
 

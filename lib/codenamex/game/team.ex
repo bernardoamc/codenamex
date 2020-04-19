@@ -14,13 +14,23 @@ defmodule Codenamex.Game.Team do
   end
 
   def add_player(team, player, "regular") do
-    updated_players = Map.put(team.players, player.name, player)
-    {:ok, %{team | players: updated_players}}
+    case Map.has_key?(team.players, player.name) do
+      false ->
+        updated_players = Map.put(team.players, player.name, player)
+        {:ok, %{team | players: updated_players}}
+      true ->
+        {:error, :player_already_exists}
+    end
   end
 
   def add_player(%{spymaster: nil} = team, player, "spymaster") do
-    updated_players = Map.put(team.players, player.name, player)
-    {:ok, %{team | spymaster: player.name, players: updated_players}}
+    case Map.has_key?(team.players, player.name) do
+      false ->
+        updated_players = Map.put(team.players, player.name, player)
+        {:ok, %{team | spymaster: player.name, players: updated_players}}
+      true ->
+        {:error, :player_already_exists}
+    end
   end
 
   def add_player(_team, _player, "spymaster") do

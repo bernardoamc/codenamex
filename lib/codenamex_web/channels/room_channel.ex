@@ -17,6 +17,8 @@ defmodule CodenamexWeb.RoomChannel do
       |> assign(:team, "guest")
 
     case GameServer.add_player(game_pid, player_name) do
+      {:error, reason} ->
+        {:error, %{reason: reason}, socket}
       {:ok, {players, serialized_state}} ->
         send(self(), :joined_room)
         {:ok, %{status: :ongoing, players: players, state: serialized_state}, socket}
@@ -54,6 +56,9 @@ defmodule CodenamexWeb.RoomChannel do
 
     {:reply, {:ok, %{}}, socket}
   end
+
+  # TODO: Implement touch_intent
+  # TODO: Implement pass
 
   def handle_in("touch_card", %{"word" => word}, socket) do
     game_pid = socket.assigns.game_pid
