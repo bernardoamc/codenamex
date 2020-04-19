@@ -32,6 +32,10 @@ defmodule Codenamex.GameServer do
     GenServer.call(pid, {:pick_team, player, team, type})
   end
 
+  def next_turn(pid, player_name) do
+    GenServer.call(pid, {:next_turn, player_name})
+  end
+
   def remove_player(pid, player) do
     GenServer.call(pid, {:remove_player, player})
   end
@@ -92,6 +96,16 @@ defmodule Codenamex.GameServer do
     case Game.remove_player(state, player_name) do
       {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
       {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call({:next_turn, player_name}, _from, state) do
+    case Game.next_turn(state, player_name) do
+      {:ok, new_state} ->
+        serialized_state = GameSerializer.serialize(:next_turn, new_state)
+        {:reply, {:ok, serialized_state}, new_state}
+      error ->
+        {:reply, error, state}
     end
   end
 

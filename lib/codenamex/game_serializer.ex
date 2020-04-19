@@ -28,4 +28,8 @@ defmodule Codenamex.GameSerializer do
   def serialize(:touch_card, game) do
     Map.take(game, [:touched_card | @keys])
   end
+
+  def serialize(:next_turn, game) do
+    Map.take(game, @keys)
+  end
 end

@@ -40,6 +40,13 @@ defmodule Codenamex.Game do
     end
   end
 
+  def next_turn(game, player_name) do
+    case allowed_to_finish_turn?(game, player_name) do
+      true ->  {:ok, %{game | turn: next_team(game.turn)}}
+      false -> {:error, :wrong_turn}
+    end
+  end
+
   def touch_card(game, word, player_name) do
     case allowed_to_touch_card?(game, player_name) do
       true -> touch_card(game, word)
@@ -161,11 +168,15 @@ defmodule Codenamex.Game do
   end
 
   defp allowed_to_touch_card?(game, player_name) do
-    team_color = find_team(game, player_name)
-    team = fetch_team(game, team_color)
+    player_team_color = find_team(game, player_name)
+    team = fetch_team(game, player_team_color)
     player = Team.fetch_player(team, player_name)
 
-    (team_color == game.turn) && Player.can_select_word?(player)
+    (player_team_color == game.turn) && Player.can_select_word?(player)
+  end
+
+  defp allowed_to_finish_turn?(game, player_name)  do
+    find_team(game, player_name) == game.turn
   end
 
   defp find_team(game, player_name) do

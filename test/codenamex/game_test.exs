@@ -55,6 +55,22 @@ defmodule Codenamex.GameTest do
       = Game.pick_team(updated_game, player.name, "blue", "regular")
   end
 
+  test "next_turn/2 returns an error when its not players turn" do
+    game = setup_game()
+    opponent_team = Game.next_team(game.turn)
+    opponent = pick_player(game, opponent_team, "regular")
+
+    assert {:error, :wrong_turn} = Game.next_turn(game, opponent.name)
+  end
+
+  test "next_turn/2 updates the game turn" do
+    game = setup_game()
+    player = pick_player(game, game.turn, "regular")
+    opponent_team = Game.next_team(game.turn)
+
+    assert {:ok, %Game{turn: ^opponent_team}} = Game.next_turn(game, player.name)
+  end
+
   test "touch_card/3 returns an error when it's not the players turn" do
     game = setup_game()
     opponent_team = Game.next_team(game.turn)
@@ -66,10 +82,10 @@ defmodule Codenamex.GameTest do
 
   test "touch_card/3 returns an error when player is a spymaster" do
     game = setup_game()
-    opponent = pick_player(game, game.turn, "spymaster")
+    player = pick_player(game, game.turn, "spymaster")
     card = pick_untouched_card_from(game, game.turn)
 
-    assert {:error, :wrong_turn} = Game.touch_card(game, card.word, opponent.name)
+    assert {:error, :wrong_turn} = Game.touch_card(game, card.word, player.name)
   end
 
   test "touch_card/3 returns an error when card is already touched" do
