@@ -47,8 +47,8 @@ defmodule Codenamex.Game do
     end
   end
 
-  defp next_team("red"), do: "blue"
-  defp next_team("blue"), do: "red"
+  def next_team("red"), do: "blue"
+  def next_team("blue"), do: "red"
 
   def fetch_players(game) do
     guests = Team.fetch_players(game.guests)
@@ -58,6 +58,7 @@ defmodule Codenamex.Game do
     %{guests: guests, red_team: red, blue_team: blue}
   end
 
+  # TODO: Make nicknames unique
   def add_player(game, player_name)  do
     player = Player.setup(player_name, "regular")
 
