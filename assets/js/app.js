@@ -15,9 +15,11 @@ import "phoenix_html"
 //
 // Local files can be imported directly using relative paths, for example:
 import socket from "./socket"
-import Game from "./game"
+import { GameState } from "./game"
 
-let gameState = Game.init(socket);
+const { playerName, roomName } = window.codenamex;
+let gameState = new GameState({socket, playerName, roomName});
+gameState.connect();
 
 import 'mobx-react-lite/batchingForReactDom';
 import React from "react";

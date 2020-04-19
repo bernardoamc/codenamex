@@ -1,18 +1,31 @@
-import React from 'react';
-import {observer} from 'mobx-react';
+import React from "react";
+import { observer, Provider, inject } from "mobx-react";
 import Lobby from "./Lobby";
 import Game from "./Game";
 
-const App = observer(function({ gameState }){
-  switch (gameState.status) {
-    case "uninitialized":
-      return <h1>Loading</h1>;
-    case "lobby":
-      return <Lobby gameState={gameState}/>;
-    default:
-      return <Game/>;
-  }
+function Loading() {
+  return <h1>Loading</h1>;
+}
+
+const Route = inject("gameState")(
+  observer(function ({ gameState }) {
+    switch (gameState.status) {
+      case "uninitialized":
+        return <Loading />;
+      case "lobby":
+        return <Lobby />;
+      default:
+        return <Game />;
+    }
+  })
+);
+
+const App = observer(function ({ gameState }) {
+  return (
+    <Provider gameState={gameState}>
+      <Route />
+    </Provider>
+  );
 });
 
 export default App;
-

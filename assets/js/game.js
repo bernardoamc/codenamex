@@ -1,66 +1,110 @@
-import { observable, action } from "mobx";
+import { observable, action, computed } from "mobx";
 
-let Game = {
-  init(socket, element) {
-    let codenamex = window.codenamex || {};
-    if(!codenamex.roomName) { return }
+export class GameState {
+  @observable status = "uninitialized";
+  @observable players = null;
+  @observable state = null;
 
-    let gameState = observable({
-      status: "uninitialized",
-      players: null,
-      playerName: codenamex.playerName,
-      roomName: codenamex.roomName,
+  @computed get guests() {
+    return this.players ? this.players.guests : [];
+  }
 
-      initialize: action(function (status, players) {
-        this.status = status;
-        this.players = players;
-      })
+  @computed get redTeam() {
+    if (!this.players) {
+      return { spyMaster: null, players: [] };
+    }
+
+    return {
+      players: this.players.red_team.filter((player) => player.regular),
+      spyMaster: this.players.red_team.find((player) => player.spymaster),
+    };
+  }
+
+  @computed get blueTeam() {
+    if (!this.players) {
+      return { spyMaster: null, players: [] };
+    }
+
+    return {
+      players: this.players.blue_team.filter((player) => player.regular),
+      spyMaster: this.players.blue_team.find((player) => player.spymaster),
+    };
+  }
+
+  constructor({ roomName, playerName, socket }) {
+    this.roomName = roomName;
+    this.playerName = playerName;
+    this.socket = socket;
+  }
+
+  connect() {
+    this.socket.connect();
+
+    this.roomChannel = this.socket.channel(`room:${this.roomName}`, {
+      player_name: this.playerName,
     });
 
-    socket.connect();
+    this.roomChannel
+      .join()
+      .receive("ok", this._handleJoinRoom)
+      .receive("error", this._handleError);
 
-    let roomChannel = socket.channel(
-      `room:${codenamex.roomName}`,
-      { player_name: codenamex.playerName }
-    );
-
-    roomChannel.join()
-      .receive("ok", resp => {
-        console.log("game", resp);
-        gameState.initialize(resp.status, resp.players);
-      })
-      .receive("error", e => console.log("error joining channel", e))
-
-    roomChannel.on("joined_room", (resp) => {
-      console.log("broadcasted_joined_room", resp);
-    })
-
-    roomChannel.on("team_change", (resp) => {
-      gameState.players = resp.players;
-      console.log("broadcasted_team_change", resp);
-    })
-
-    roomChannel.on("game_started", (resp) => {
-      console.log("broadcasted_game_started", resp);
-      let cards = resp.state.board.cards
-      let words = Object.keys(cards)
-
-      roomChannel.push("touch_card", {word: words[0]})
-        .receive("ok", (resp) => console.log("touch_card:", resp))
-    })
-
-    roomChannel.on("touched_card", (resp) => {
-      console.log("touched_card", resp);
-    })
-
-    roomChannel.push("pick_team", {type: "regular", team: "red"})
-      .receive("ok", (resp) => console.log("pick_team:", resp))
-
-    roomChannel.push("start_game", {})
-      .receive("ok", (resp) => console.log("start_game:", resp))
-
-    return gameState;
+    this.roomChannel.on("joined_room", this._handleJoinedRoom);
+    this.roomChannel.on("team_change", this._handleTeamChange);
+    this.roomChannel.on("game_started", this._handleGameStarted);
+    this.roomChannel.on("touched_card", this._handleTouchedCard);
   }
-};
 
-export default Game
+  @action.bound
+  _handleJoinRoom(payload) {
+    this.status = payload.status;
+    this.players = payload.players;
+  }
+
+  @action.bound
+  _handleError(error) {
+    console.error("error", error);
+  }
+
+  @action.bound
+  _handleJoinedRoom(payload) {
+    console.log("joined_room", payload);
+  }
+
+  @action.bound
+  _handleTeamChange(payload) {
+    this.players = payload.players;
+  }
+
+  @action.bound
+  _handleGameStarted(payload) {
+    this.status = "game";
+    this.state = payload.state;
+  }
+
+  @action.bound
+  _handleTouchedCard(payload) {
+    console.log("touched_card", payload);
+  }
+
+  @action
+  touchCard(word) {
+    this.roomChannel
+      .push("touch_card", { word })
+      .receive("ok", (payload) => console.log("touch_card", payload));
+  }
+
+  @action
+  pickTeam(team, role) {
+    this.roomChannel
+      .push("pick_team", { type: role, team })
+      .receive("ok", (resp) => console.log("pick_team", resp));
+  }
+
+  @action
+  startGame() {
+    this.roomChannel
+      .push("start_game", {})
+      .receive("ok", (resp) => console.log("start_game", resp));
+  }
+}
