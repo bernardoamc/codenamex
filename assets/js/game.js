@@ -105,10 +105,18 @@ export class GameState {
     return guest;
   }
 
-  @computed get playerCanPlay() {
+  @computed get playerCanTouchCard() {
     const status = this.playerStatus;
 
-    return status.team === this.currentTurn && (!this.isOver);
+    return (
+      !this.isOver && !status.spymaster && status.team === this.currentTurn
+    );
+  }
+
+  @computed get playerCanEndTurn() {
+    const status = this.playerStatus;
+
+    return !this.isOver && status.team === this.currentTurn;
   }
 
   constructor({ roomName, playerName, socket }) {

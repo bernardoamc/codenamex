@@ -38,7 +38,7 @@ const Card = inject("gameState")(
       <button
         className={classNames.join(" ")}
         onClick={handleOnClick}
-        disabled={card.touched || !gameState.playerCanPlay}
+        disabled={card.touched || !gameState.playerCanTouchCard}
       >
         <div className="game-board__card-word">{card.word}</div>
       </button>
@@ -97,7 +97,7 @@ const Game = inject("gameState")(
           </tbody>
         </table>
         <div className="game-board">{rows}</div>
-        <button onClick={handleNextTurn} disabled={!gameState.playerCanPlay}>
+        <button onClick={handleNextTurn} disabled={!gameState.playerCanEndTurn}>
           Next turn
         </button>
       </div>
