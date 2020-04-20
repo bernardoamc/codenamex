@@ -109,7 +109,7 @@ export class GameState {
     const status = this.playerStatus;
 
     return (
-      !this.isOver && !status.spymaster && status.team === this.currentTurn
+      !this.isOver && !status.isSpymaster && status.team === this.currentTurn
     );
   }
 

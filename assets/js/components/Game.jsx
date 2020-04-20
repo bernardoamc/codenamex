@@ -52,12 +52,6 @@ const Game = inject("gameState")(
       <Card key={cardIndex} card={card} />
     ));
 
-    const rows = chunk(cells, ROW_LENGTH).map((cards, rowIndex) => (
-      <div key={rowIndex} className="game-board__card-row">
-        {cards}
-      </div>
-    ));
-
     const handleNextTurn = () => {
       gameState.nextTurn();
     };
@@ -96,7 +90,7 @@ const Game = inject("gameState")(
             </tr>
           </tbody>
         </table>
-        <div className="game-board">{rows}</div>
+        <div className="game-board">{cells}</div>
         <button onClick={handleNextTurn} disabled={!gameState.playerCanEndTurn}>
           Next turn
         </button>
