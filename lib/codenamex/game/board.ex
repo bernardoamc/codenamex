@@ -41,6 +41,15 @@ defmodule Codenamex.Game.Board do
     }
   end
 
+  def touch_intent(board, word) do
+    selected_regular_card = Map.fetch!(board.regular_cards, word)
+
+    case Card.touchable?(selected_regular_card) do
+      true -> {:ok, board}
+      false -> {:error, :card_already_touched}
+    end
+  end
+
   def touch_card(board, word) do
     selected_regular_card = Map.fetch!(board.regular_cards, word)
 

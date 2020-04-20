@@ -89,6 +89,32 @@ defmodule Codenamex.GameTest do
     assert {:ok, %Game{turn: ^opponent_team}} = Game.next_turn(game, player.name)
   end
 
+  test "touch_intent/3 returns an error when it's not the players turn" do
+    game = setup_game()
+    opponent_team = Game.next_team(game.turn)
+    opponent = pick_player(game, opponent_team, "regular")
+    card = pick_untouched_card_from(game, opponent_team)
+
+    assert {:error, :wrong_turn} = Game.touch_intent(game, card.word, opponent.name)
+  end
+
+  test "touch_intent/3 returns an error when player is a spymaster" do
+    game = setup_game()
+    player = pick_player(game, game.turn, "spymaster")
+    card = pick_untouched_card_from(game, game.turn)
+
+    assert {:error, :wrong_turn} = Game.touch_intent(game, card.word, player.name)
+  end
+
+  test "touch_intent/3 returns an error when card is already touched" do
+    game = setup_game()
+    player = pick_player(game, game.turn, "regular")
+    card = pick_untouched_card_from(game, game.turn)
+
+    assert {:ok, new_state} = Game.touch_card(game, card.word, player.name)
+    assert {:error, :card_already_touched} = Game.touch_intent(new_state, card.word, player.name)
+  end
+
   test "touch_card/3 returns an error when it's not the players turn" do
     game = setup_game()
     opponent_team = Game.next_team(game.turn)

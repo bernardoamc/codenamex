@@ -52,6 +52,10 @@ defmodule Codenamex.GameServer do
     GenServer.call(pid, :serialize_touch_state)
   end
 
+  def touch_intent(pid, word, player_name) do
+    GenServer.call(pid, {:touch_intent, word, player_name})
+  end
+
   def touch_card(pid, word, player_name) do
     GenServer.call(pid, {:touch_card, word, player_name})
   end
@@ -120,12 +124,20 @@ defmodule Codenamex.GameServer do
     end
   end
 
+  def handle_call({:touch_intent, word, player_name}, _from, state) do
+    case Game.touch_intent(state, word, player_name) do
+      {:ok, new_state} -> {:reply, {:ok, new_state}, new_state}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
   def handle_call({:touch_card, word, player_name}, _from, state) do
     case Game.touch_card(state, word, player_name) do
       {:ok, new_state} ->
         serialized_state = GameSerializer.serialize(:touch_card, new_state)
         {:reply, {:ok, serialized_state}, new_state}
-      {:error, reason} -> {:reply, {:error, reason}, state}
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 

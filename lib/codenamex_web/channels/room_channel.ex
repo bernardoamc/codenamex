@@ -56,8 +56,6 @@ defmodule CodenamexWeb.RoomChannel do
     end
   end
 
-  # TODO: Implement touch_intent
-
   def handle_in("next_turn", _opts, socket) do
     game_pid = socket.assigns.game_pid
     player_name = socket.assigns.player_name
@@ -65,6 +63,19 @@ defmodule CodenamexWeb.RoomChannel do
      case GameServer.next_turn(game_pid, player_name) do
      {:ok, serialized_state} ->
         broadcast! socket, "new_turn", %{state: serialized_state}
+        {:reply, {:ok, %{}}, socket}
+      {:error, reason} ->
+        {:reply, {:error, %{reason: reason}}, socket}
+    end
+  end
+
+  def handle_in("touch_intent", %{"word" => word}, socket) do
+    game_pid = socket.assigns.game_pid
+    player_name = socket.assigns.player_name
+
+    case GameServer.touch_intent(game_pid, word, player_name) do
+      {:ok, _} ->
+        broadcast! socket, "touch_happened", %{word: word}
         {:reply, {:ok, %{}}, socket}
       {:error, reason} ->
         {:reply, {:error, %{reason: reason}}, socket}

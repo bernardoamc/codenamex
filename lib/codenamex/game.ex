@@ -47,6 +47,13 @@ defmodule Codenamex.Game do
     end
   end
 
+  def touch_intent(game, word, player_name) do
+    case allowed_to_touch_card?(game, player_name) do
+      true ->  touch_intent(game, word)
+      false -> {:error, :wrong_turn}
+    end
+  end
+
   def touch_card(game, word, player_name) do
     case allowed_to_touch_card?(game, player_name) do
       true -> touch_card(game, word)
@@ -111,6 +118,13 @@ defmodule Codenamex.Game do
       %{game | board: new_board, red_team: blue_players, blue_team: red_players, winner: nil, over: false}
     else
       %{game | board: new_board, winner: nil, over: false}
+    end
+  end
+
+  defp touch_intent(game, word) do
+    case Board.touch_intent(game.board, word) do
+      {:ok, _} -> {:ok, game}
+      {:error, reason} -> {:error, reason}
     end
   end
 
