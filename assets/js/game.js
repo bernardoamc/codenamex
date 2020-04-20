@@ -61,7 +61,7 @@ export class GameState {
     if (!this._state) return 0;
 
     return Object.values(this._state.board.cards).filter(
-      (card) => card.color === "blue"
+      (card) => card.color === "blue" && card.touched
     ).length;
   }
 
@@ -69,7 +69,7 @@ export class GameState {
     if (!this._state) return 0;
 
     return Object.values(this._state.board.cards).filter(
-      (card) => card.color === "red"
+      (card) => card.color === "red" && card.touched
     ).length;
   }
 
@@ -138,6 +138,7 @@ export class GameState {
       .receive("error", this._handleError);
 
     this.roomChannel.on("joined_room", this._handleJoinedRoom);
+    this.roomChannel.on("player_left", this._handlePlayerLeft);
     this.roomChannel.on("team_change", this._handleTeamChange);
     this.roomChannel.on("game_started", this._handleGameStarted);
     this.roomChannel.on("touched_card", this._handleTouchedCard);
@@ -146,8 +147,9 @@ export class GameState {
 
   @action.bound
   _handleJoinRoom(payload) {
-    this.status = payload.status;
     this._players = payload.players;
+    this._state = payload.state;
+    this.status = payload.state ? "game" : "lobby";
   }
 
   @action.bound
@@ -157,7 +159,12 @@ export class GameState {
 
   @action.bound
   _handleJoinedRoom(payload) {
-    console.log("joined_room", payload);
+    this._players = payload.players;
+  }
+
+  @action.bound
+  _handlePlayerLeft(payload) {
+    this._players = payload.players;
   }
 
   @action.bound
